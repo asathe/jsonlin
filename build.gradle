@@ -5,6 +5,7 @@ buildscript {
     ext.kotlin_version = "1.0.3"
     repositories {
         mavenCentral()
+        mavenLocal()
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
@@ -13,9 +14,11 @@ buildscript {
 
 apply plugin: "java"
 apply plugin: "kotlin"
+apply plugin: "maven-publish"
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
@@ -29,4 +32,36 @@ dependencies {
 
 sourceSets {
     main.java.srcDirs += "src/main/kotlin"
+}
+
+jar {
+    manifest {
+        attributes(
+                "Implementation-Title": "jsonlin",
+                "Implementation-Version": version
+        )
+    }
+}
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId "jsonlin"
+
+            from components.java
+
+            artifact sourceJar {
+                classifier "sources"
+            }
+        }
+    }
+    repositories {
+        maven {
+            url "$buildDir/repo"
+        }
+    }
 }
