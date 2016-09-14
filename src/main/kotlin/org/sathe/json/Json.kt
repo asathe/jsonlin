@@ -80,7 +80,7 @@ class JsonParser(val lexer: Iterator<Any?>) {
 
 class JsonLexer(stream: InputStream) : Iterator<Any?> {
 
-    private val reader = InputStreamReader(stream)
+    private val reader = InputStreamReader(stream).buffered()
     private val tokenBuilder = StringBuilder()
 
     private var currentChar: Char = '\u0000'

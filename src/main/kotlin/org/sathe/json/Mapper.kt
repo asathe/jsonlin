@@ -1,5 +1,6 @@
 package org.sathe.json
 
+import java.io.InputStream
 import java.io.Serializable
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -13,6 +14,8 @@ import kotlin.reflect.jvm.javaField
 import kotlin.reflect.memberProperties
 
 interface Context {
+    fun <T : Any> fromJsonAsStream(json: InputStream, type: KClass<T>): Iterable<T>
+    fun <T : Any> fromJson(json: InputStream, type: KClass<T>): T
     fun <T : Any> fromJson(json: JsonType, type: KClass<T>): T
     fun <T : Any> toJsonType(value: T): JsonType
     fun toJson(value: Any): String = toJsonType(value).toJson()
@@ -92,7 +95,6 @@ class ReflectionMapper : Mapper<Any> {
 private enum class AnEnumSoWeCanRegisterWithTheMapper
 
 class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
-
     val mappers: Map<MapperScope, Mapper<*>> = linkedMapOf(*customMappers) + linkedMapOf(
             instanceOf(String::class) to object : Mapper<String> {
                 override fun fromJson(json: JsonType, type: KClass<String>, context: Context): String = (json as JsonValue).string()
@@ -133,6 +135,23 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
             },
             subTypeOf(Serializable::class) to ReflectionMapper()
     )
+
+    override fun <T : Any> fromJson(json: InputStream, type: KClass<T>): T {
+        return fromJson(JsonParser(JsonLexer(json)).parse(), type)
+    }
+
+    override fun <T : Any> fromJsonAsStream(json: InputStream, type: KClass<T>): Iterable<T> {
+        val list = JsonParser(JsonLexer(json)).parseListAsStream()
+        return object: Iterable<T> {
+            override fun iterator(): Iterator<T> {
+                return object: Iterator<T> {
+                    private val iterator = list.iterator()
+                    override fun hasNext(): Boolean = iterator.hasNext()
+                    override fun next(): T = fromJson(iterator.next(), type)
+                }
+            }
+        }
+    }
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : Any> fromJson(json: JsonType, type: KClass<T>): T {
