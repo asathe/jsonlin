@@ -39,7 +39,7 @@ interface JsonVisitor {
 class JsonPath : JsonVisitor {
 
     constructor(path: String) : this(StringTokenizer(path, ".[]", true))
-    constructor(tokens: StringTokenizer) {
+    private constructor(tokens: StringTokenizer) {
         this.tokens = tokens
     }
 
@@ -52,15 +52,9 @@ class JsonPath : JsonVisitor {
             token = tokens.nextToken()
         }
         if (json.hasChild(token)) {
-            result = if (tokens.hasMoreTokens()) {
-                val visitor = JsonPath(tokens)
-                json.child(token).accept(visitor)
-                visitor.result()
-            } else {
-                json.child(token)
-            }
+            json.child(token).accept(this)
         } else {
-            throw IllegalArgumentException("Unable to find $token in $json")
+            throw JsonException("Unable to find $token in $json")
         }
     }
 
@@ -68,26 +62,22 @@ class JsonPath : JsonVisitor {
         assert(tokens.nextToken() == "[")
         val index = Integer.valueOf(tokens.nextToken())
         if (json.size() <= index) {
-            throw IllegalArgumentException("Index $index not found in $json")
+            throw JsonException("Index $index not found in $json")
         }
         assert(tokens.nextToken() == "]")
-        result = if (tokens.hasMoreTokens()) {
-            val visitor = JsonPath(tokens)
-            json[index].accept(visitor)
-            visitor.result()
-        } else json[index]
+        json[index].accept(this)
     }
 
     override fun visit(json: JsonValue) {
         if (tokens.hasMoreTokens()) {
-            throw JsonException("Path $tokens goes beyond a leaf - found $json")
+            throw JsonException("Path \"${tokens.toList().joinToString()}\" goes beyond a leaf - found $json")
         }
         result = json
     }
 
     override fun visit(json: JsonNull) {
         if (tokens.hasMoreTokens()) {
-            throw JsonException("Path $tokens goes beyond a leaf - found $json")
+            throw JsonException("Path \"${tokens.toList().joinToString()}\" goes beyond a leaf - found $json")
         }
         result = json
     }
@@ -96,7 +86,7 @@ class JsonPath : JsonVisitor {
         assert(tokens.nextToken() == "[")
         val index = Integer.valueOf(tokens.nextToken())
         assert(tokens.nextToken() == "]")
-        result = json.elementAt(index)
+        json.elementAt(index).accept(this)
     }
 
     fun result(): JsonType {

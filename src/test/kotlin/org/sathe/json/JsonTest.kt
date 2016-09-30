@@ -1,6 +1,5 @@
 package org.sathe.json
 
-import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.startsWith
 import org.hamcrest.MatcherAssert.assertThat
@@ -272,8 +271,8 @@ class JsonTest {
     fun blowsUpIfNotFoundOnAnObject() {
         val json = obj("moo" to array(obj("cow1" to array(1, 2)), obj("cow2" to array(3, 4))))
 
-        exception.expect(IllegalArgumentException::class.java)
-        exception.expectMessage(CoreMatchers.startsWith("Unable to find cow3"))
+        exception.expect(JsonException::class.java)
+        exception.expectMessage(startsWith("Unable to find cow3"))
 
         json.find("moo[1].cow3[1]")
     }
@@ -282,9 +281,26 @@ class JsonTest {
     fun blowsUpIfNotFoundOnAList() {
         val json = obj("moo" to array(obj("cow1" to array(1, 2)), obj("cow2" to array(3, 4))))
 
-        exception.expect(IllegalArgumentException::class.java)
-        exception.expectMessage(CoreMatchers.startsWith("Index 3 not found"))
+        exception.expect(JsonException::class.java)
+        exception.expectMessage(startsWith("Index 3 not found"))
 
         json.find("moo[1].cow2[3]")
+    }
+
+    @Test
+    fun returnsTheValueOnAnEmptyPath() {
+        val json = value("moo")
+
+        assertEquals(value("moo"), json.find(""))
+    }
+
+    @Test
+    fun blowsUpIfWeHaveAPathOnALeaf() {
+        val json = value("moo")
+
+        exception.expect(JsonException::class.java)
+        exception.expectMessage(startsWith("Path \"cow\" goes beyond a leaf - found \"moo\""))
+
+        json.find("cow")
     }
 }
