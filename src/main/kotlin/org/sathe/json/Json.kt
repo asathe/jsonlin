@@ -76,6 +76,12 @@ class JsonParser(val lexer: Iterator<Any?>) {
         }
         return obj
     }
+
+    private fun assertThat(expression: Boolean, message: () -> String) {
+        if (!expression) {
+            throw JsonException(message())
+        }
+    }
 }
 
 class JsonLexer(stream: InputStream) : Iterator<Any?> {
@@ -235,12 +241,13 @@ class JsonLexer(stream: InputStream) : Iterator<Any?> {
 
         return tokenBuilder.toString()
     }
-}
 
-private fun assertThat(expression: Boolean, message: () -> String) {
-    if (!expression) {
-        throw JsonException(message())
+    private fun assertThat(expression: Boolean, message: () -> String) {
+        if (!expression) {
+            throw JsonException(message())
+        }
     }
+
 }
 
 class JsonException(message: String) : RuntimeException(message)

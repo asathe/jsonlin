@@ -13,10 +13,98 @@ interface JsonType {
         toJson(writer, format)
         return writer.toString()
     }
+
+    fun accept(visitor: JsonVisitor)
+    fun find(path: String): JsonType {
+        val jsonPath = JsonPath(path)
+        accept(jsonPath)
+        return jsonPath.result()
+    }
+}
+
+interface JsonVisitor {
+
+    fun visit(json: JsonObject)
+
+    fun visit(json: JsonArray)
+
+    fun visit(json: JsonValue)
+
+    fun visit(json: JsonNull)
+
+    fun visit(json: JsonStream)
+
+}
+
+class JsonPath : JsonVisitor {
+
+    constructor(path: String) : this(StringTokenizer(path, ".[]", true))
+    constructor(tokens: StringTokenizer) {
+        this.tokens = tokens
+    }
+
+    private val tokens: StringTokenizer
+    private var result: JsonType? = null
+
+    override fun visit(json: JsonObject) {
+        var token = tokens.nextToken()
+        if (token == ".") {
+            token = tokens.nextToken()
+        }
+        if (json.hasChild(token)) {
+            result = if (tokens.hasMoreTokens()) {
+                val visitor = JsonPath(tokens)
+                json.child(token).accept(visitor)
+                visitor.result()
+            } else {
+                json.child(token)
+            }
+        } else {
+            throw IllegalArgumentException("Unable to find $token in $json")
+        }
+    }
+
+    override fun visit(json: JsonArray) {
+        assert(tokens.nextToken() == "[")
+        val index = Integer.valueOf(tokens.nextToken())
+        if (json.size() <= index) {
+            throw IllegalArgumentException("Index $index not found in $json")
+        }
+        assert(tokens.nextToken() == "]")
+        result = if (tokens.hasMoreTokens()) {
+            val visitor = JsonPath(tokens)
+            json[index].accept(visitor)
+            visitor.result()
+        } else json[index]
+    }
+
+    override fun visit(json: JsonValue) {
+        if (tokens.hasMoreTokens()) {
+            throw JsonException("Path $tokens goes beyond a leaf - found $json")
+        }
+        result = json
+    }
+
+    override fun visit(json: JsonNull) {
+        if (tokens.hasMoreTokens()) {
+            throw JsonException("Path $tokens goes beyond a leaf - found $json")
+        }
+        result = json
+    }
+
+    override fun visit(json: JsonStream) {
+        assert(tokens.nextToken() == "[")
+        val index = Integer.valueOf(tokens.nextToken())
+        assert(tokens.nextToken() == "]")
+        result = json.elementAt(index)
+    }
+
+    fun result(): JsonType {
+        return result!!
+    }
 }
 
 class JsonObject() : JsonType {
-
     private val entries = sortedMapOf<String, JsonType>()
 
     constructor(data: Map<*, *>) : this() {
@@ -34,6 +122,10 @@ class JsonObject() : JsonType {
             if (i < maxIndex) writer.write(",")
         }
         writer.write(format.endObject())
+    }
+
+    override fun accept(visitor: JsonVisitor) {
+        visitor.visit(this)
     }
 
     fun add(key: String, item: JsonType): JsonObject {
@@ -125,10 +217,13 @@ class JsonStream(val types: Iterator<JsonType>) : JsonType, Iterable<JsonType> {
     override fun iterator(): Iterator<JsonType> {
         return types
     }
+
+    override fun accept(visitor: JsonVisitor) {
+        visitor.visit(this)
+    }
 }
 
 class JsonArray() : JsonType, Iterable<JsonType> {
-
     private val items = ArrayList<JsonType>()
 
     constructor(entries: List<Any?>) : this() {
@@ -150,6 +245,10 @@ class JsonArray() : JsonType, Iterable<JsonType> {
         writer.write(format.endList())
     }
 
+    override fun accept(visitor: JsonVisitor) {
+        visitor.visit(this)
+    }
+
     operator fun get(index: Int): JsonType {
         return items[index]
     }
@@ -157,6 +256,10 @@ class JsonArray() : JsonType, Iterable<JsonType> {
     fun add(item: JsonType): JsonArray {
         items.add(item)
         return this
+    }
+
+    fun size(): Int {
+        return items.size
     }
 
     override fun toString(): String = toJson(Minimal())
@@ -193,12 +296,15 @@ private fun encodedCharacterFor(c: Char): String {
 }
 
 class JsonValue(val value: Any?) : JsonType {
-
     override fun toJson(writer: Writer, format: JsonFormat) {
         when (value) {
             is String -> encoded(writer, value)
             else -> writer.write("$value")
         }
+    }
+
+    override fun accept(visitor: JsonVisitor) {
+        visitor.visit(this)
     }
 
     fun string(): String = value.toString()
@@ -227,6 +333,10 @@ class JsonValue(val value: Any?) : JsonType {
 
 class JsonNull : JsonType {
     override fun toJson(writer: Writer, format: JsonFormat) = writer.write("null")
+
+    override fun accept(visitor: JsonVisitor) {
+        visitor.visit(this)
+    }
 
     override fun equals(other: Any?): Boolean = other is JsonNull
 

@@ -1,8 +1,12 @@
 package org.sathe.json
 
+import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.CoreMatchers.startsWith
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExpectedException
 import java.math.BigDecimal
 import java.math.BigInteger
 import kotlin.test.assertEquals
@@ -10,6 +14,8 @@ import kotlin.test.assertFailsWith
 import kotlin.text.Charsets.UTF_16
 
 class JsonTest {
+
+    @Rule @JvmField val exception = ExpectedException.none()
 
     @Test
     fun canProvideFormattingOptions() {
@@ -242,5 +248,43 @@ class JsonTest {
     fun canDeserialiseDeeplyNestedStructures() {
         assertEquals(array(array(array(array(array(array(array(array(array(array(array(array(array(false))))))))))))),
                 JsonParser("[[[[[[[[[[[[[false]]]]]]]]]]]]]").parse())
+    }
+
+    @Test
+    fun canFindAnElementInATree() {
+        val json = obj("moo" to obj("cow" to value("woo!")))
+        assertEquals(json.find("moo.cow"), value("woo!"))
+    }
+
+    @Test
+    fun canFindAnElementInATreeInAList() {
+        val json = obj("moo" to obj("cow" to array(value("woo!"))))
+        assertEquals(json.find("moo.cow[0]"), value("woo!"))
+    }
+
+    @Test
+    fun canFindDeeplyNestedItems() {
+        val json = obj("moo" to array(obj("cow1" to array(1, 2)), obj("cow2" to array(3, 4))))
+        assertEquals(value(4), json.find("moo[1].cow2[1]"))
+    }
+
+    @Test
+    fun blowsUpIfNotFoundOnAnObject() {
+        val json = obj("moo" to array(obj("cow1" to array(1, 2)), obj("cow2" to array(3, 4))))
+
+        exception.expect(IllegalArgumentException::class.java)
+        exception.expectMessage(CoreMatchers.startsWith("Unable to find cow3"))
+
+        json.find("moo[1].cow3[1]")
+    }
+
+    @Test
+    fun blowsUpIfNotFoundOnAList() {
+        val json = obj("moo" to array(obj("cow1" to array(1, 2)), obj("cow2" to array(3, 4))))
+
+        exception.expect(IllegalArgumentException::class.java)
+        exception.expectMessage(CoreMatchers.startsWith("Index 3 not found"))
+
+        json.find("moo[1].cow2[3]")
     }
 }
