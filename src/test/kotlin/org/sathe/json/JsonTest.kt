@@ -264,6 +264,8 @@ class JsonTest {
     @Test
     fun canFindDeeplyNestedItems() {
         val json = obj("moo" to array(obj("cow1" to array(1, 2)), obj("cow2" to array(3, 4))))
+        assertEquals(obj("cow1" to array(1, 2)), json.find("moo[0]"))
+        assertEquals(array(1, 2), json.find("moo[0].cow1"))
         assertEquals(value(4), json.find("moo[1].cow2[1]"))
     }
 

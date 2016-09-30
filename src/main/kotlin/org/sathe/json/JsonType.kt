@@ -36,17 +36,16 @@ interface JsonVisitor {
 
 }
 
-class JsonPath : JsonVisitor {
+class JsonPath(path: String) : JsonVisitor {
 
-    constructor(path: String) : this(StringTokenizer(path, ".[]", true))
-    private constructor(tokens: StringTokenizer) {
-        this.tokens = tokens
-    }
-
-    private val tokens: StringTokenizer
+    private val tokens = StringTokenizer(path, ".[]", true)
     private var result: JsonType? = null
 
     override fun visit(json: JsonObject) {
+        if (!tokens.hasMoreTokens()) {
+            result = json
+            return
+        }
         var token = tokens.nextToken()
         if (token == ".") {
             token = tokens.nextToken()
@@ -59,6 +58,10 @@ class JsonPath : JsonVisitor {
     }
 
     override fun visit(json: JsonArray) {
+        if (!tokens.hasMoreTokens()) {
+            result = json
+            return
+        }
         assert(tokens.nextToken() == "[")
         val index = Integer.valueOf(tokens.nextToken())
         if (json.size() <= index) {
