@@ -183,6 +183,12 @@ class JsonObject() : JsonType {
         else throw JsonException("Expecting a boolean for '$key' but got '$value'")
     }
 
+    fun list(key: String): JsonArray {
+        val value = entries[key] ?: throw JsonException("No entry for '$key'")
+        return if (value is JsonArray) value
+        else throw JsonException("Expecting a list for '$key' but got '$value'")
+    }
+
     override fun toString(): String = toJson(Minimal())
 
     override fun equals(other: Any?): Boolean = if (other is JsonObject) entries == other.entries else false

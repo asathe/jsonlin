@@ -122,6 +122,13 @@ class JsonTest {
     }
 
     @Test
+    fun canGetListsFromObjects() {
+        val obj = obj()
+        obj.add("keyInt", array("moo", "cow"))
+        assertEquals(array("moo", "cow"), obj.list("keyInt"))
+    }
+
+    @Test
     fun canSerialiseNulls() {
         val obj = obj("aList" to listOf(null, null), "987" to null)
 
