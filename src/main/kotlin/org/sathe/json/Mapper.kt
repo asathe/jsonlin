@@ -14,10 +14,10 @@ import kotlin.reflect.jvm.javaField
 import kotlin.reflect.memberProperties
 
 interface Context {
-    fun <T : Any> fromJsonAsStream(json: InputStream, type: KClass<T>): Iterable<T>
-    fun <T : Any> fromJson(json: InputStream, type: KClass<T>): T
-    fun <T : Any> fromJson(json: JsonType, type: KClass<T>): T
-    fun <T : Any> toJsonType(value: T): JsonType
+    fun <T : Any> fromJsonAsStream(json: InputStream, type: KClass<T>): Iterable<T?>
+    fun <T : Any> fromJson(json: InputStream, type: KClass<T>): T?
+    fun <T : Any> fromJson(json: JsonType, type: KClass<T>): T?
+    fun <T : Any> toJsonType(value: T?): JsonType
     fun toJson(value: Any): String = toJsonType(value).toJson()
 }
 
@@ -57,7 +57,7 @@ class ReflectionMapper : Mapper<Any> {
         return newInstance
     }
 
-    private fun convert(json: JsonType, context: Context, type: ParameterizedType): Any {
+    private fun convert(json: JsonType, context: Context, type: ParameterizedType): Any? {
         if (List::class.java.isAssignableFrom(type.rawType as Class<*>)) {
             json as JsonArray
             return json.map {
@@ -67,11 +67,11 @@ class ReflectionMapper : Mapper<Any> {
         return Any()
     }
 
-    private fun convert(json: JsonType, context: Context, type: Class<*>): Any {
+    private fun convert(json: JsonType, context: Context, type: Class<*>): Any? {
         return context.fromJson(json, type.kotlin)
     }
 
-    private fun convert(json: JsonType, context: Context, type: Type): Any {
+    private fun convert(json: JsonType, context: Context, type: Type): Any? {
         return when (type) {
             is WildcardType -> convert(json, context, type.upperBounds[0])
             is ParameterizedType -> convert(json, context, type)
@@ -108,9 +108,21 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
                 override fun fromJson(json: JsonType, type: KClass<Int>, context: Context): Int = (json as JsonValue).integer()
                 override fun toJson(value: Int, context: Context): JsonType = value(value)
             },
+            instanceOf(Boolean::class) to object : Mapper<Boolean> {
+                override fun fromJson(json: JsonType, type: KClass<Boolean>, context: Context): Boolean = (json as JsonValue).boolean()
+                override fun toJson(value: Boolean, context: Context): JsonType = value(value)
+            },
             className(Boolean::class.qualifiedName!!) to object : Mapper<Boolean> {
                 override fun fromJson(json: JsonType, type: KClass<Boolean>, context: Context): Boolean = (json as JsonValue).boolean()
                 override fun toJson(value: Boolean, context: Context): JsonType = value(value)
+            },
+            instanceOf(Double::class) to object : Mapper<Double> {
+                override fun fromJson(json: JsonType, type: KClass<Double>, context: Context): Double = (json as JsonValue).decimal().toDouble()
+                override fun toJson(value: Double, context: Context): JsonType = value(BigDecimal(value))
+            },
+            className(Double::class.qualifiedName!!) to object : Mapper<Double> {
+                override fun fromJson(json: JsonType, type: KClass<Double>, context: Context): Double = (json as JsonValue).decimal().toDouble()
+                override fun toJson(value: Double, context: Context): JsonType = value(BigDecimal(value))
             },
             instanceOf(BigDecimal::class) to object : Mapper<BigDecimal> {
                 override fun fromJson(json: JsonType, type: KClass<BigDecimal>, context: Context): BigDecimal = (json as JsonValue).decimal()
@@ -128,6 +140,9 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
             subTypeOf(List::class) to object : MapperAdapter<List<Any>>() {
                 override fun toJson(value: List<Any>, context: Context): JsonType = array(value.map { context.toJsonType(it) })
             },
+            subTypeOf(Set::class) to object : MapperAdapter<Set<Any>>() {
+                override fun toJson(value: Set<Any>, context: Context): JsonType = array(value.map { context.toJsonType(it) })
+            },
             subTypeOf(Map::class) to object : MapperAdapter<Map<Any, Any>>() {
                 override fun toJson(value: Map<Any, Any>, context: Context): JsonType = obj(value
                         .mapKeys { it.key.toString() }
@@ -136,25 +151,28 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
             subTypeOf(Serializable::class) to ReflectionMapper()
     )
 
-    override fun <T : Any> fromJson(json: InputStream, type: KClass<T>): T {
+    override fun <T : Any> fromJson(json: InputStream, type: KClass<T>): T? {
         return fromJson(JsonParser(JsonLexer(json)).parse(), type)
     }
 
-    override fun <T : Any> fromJsonAsStream(json: InputStream, type: KClass<T>): Iterable<T> {
+    override fun <T : Any> fromJsonAsStream(json: InputStream, type: KClass<T>): Iterable<T?> {
         val list = JsonParser(JsonLexer(json)).parseListAsStream()
-        return object: Iterable<T> {
-            override fun iterator(): Iterator<T> {
-                return object: Iterator<T> {
+        return object: Iterable<T?> {
+            override fun iterator(): Iterator<T?> {
+                return object: Iterator<T?> {
                     private val iterator = list.iterator()
                     override fun hasNext(): Boolean = iterator.hasNext()
-                    override fun next(): T = fromJson(iterator.next(), type)
+                    override fun next(): T? = fromJson(iterator.next(), type)
                 }
             }
         }
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> fromJson(json: JsonType, type: KClass<T>): T {
+    override fun <T : Any> fromJson(json: JsonType, type: KClass<T>): T? {
+        if (json is JsonNull) {
+            return null
+        }
         val mapper = mappers
                 .filterKeys { it(type) }.values
                 .elementAtOrElse(0, { throw IllegalArgumentException("Unable to find a JSON mapper for type $type") }) as Mapper<T>
@@ -163,7 +181,10 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> toJsonType(value: T): JsonType {
+    override fun <T : Any> toJsonType(value: T?): JsonType {
+        if (value == null) {
+            return JsonNull()
+        }
         val mapper = mappers
                 .filterKeys { it(value.javaClass.kotlin) }.values
                 .elementAtOrElse(0, { throw IllegalArgumentException("Unable to find a JSON mapper for $value") }) as Mapper<T>

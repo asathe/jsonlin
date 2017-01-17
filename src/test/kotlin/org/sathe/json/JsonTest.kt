@@ -14,7 +14,7 @@ import kotlin.text.Charsets.UTF_16
 
 class JsonTest {
 
-    @Rule @JvmField val exception = ExpectedException.none()
+    @Rule @JvmField val exception: ExpectedException = ExpectedException.none()
 
     @Test
     fun canProvideFormattingOptions() {

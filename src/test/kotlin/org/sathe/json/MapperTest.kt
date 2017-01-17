@@ -53,7 +53,7 @@ class MapperTest {
                 "list1" to array("item1", "item2")
         )
 
-        var parsed = mapper.fromJson(obj, ExampleBean::class)
+        var parsed = mapper.fromJson(obj, ExampleBean::class)!!
 
         assertEquals("value1", parsed.field1)
         assertEquals("value2", parsed.field2)
@@ -64,7 +64,7 @@ class MapperTest {
         assertEquals(AnEnum.Entry1, parsed.enum1)
         assertEquals(listOf("item1", "item2"), parsed.list1)
 
-        parsed = mapper.fromJson(obj, ExampleBean::class)
+        parsed = mapper.fromJson(obj, ExampleBean::class)!!
         val reconverted = mapper.toJsonType(parsed)
 
         assertEquals(obj, reconverted)
@@ -99,7 +99,7 @@ class MapperTest {
                 "listOfLists" to array(array("item1.1", "item1.2"), array("item2.1", "item2.2"))
         )
 
-        val parsed = mapper.fromJson(obj, ExampleBean::class)
+        val parsed = mapper.fromJson(obj, ExampleBean::class)!!
 
         assertEquals("item2.2", parsed.listOfLists!![1][1])
     }
@@ -108,7 +108,7 @@ class MapperTest {
     fun canParseNullProperties() {
         val obj = obj("type" to "org.sathe.json.ExampleBean")
 
-        val parsed = mapper.fromJson(obj, ExampleBean::class)
+        val parsed = mapper.fromJson(obj, ExampleBean::class)!!
 
         assertNull(parsed.field1)
     }
