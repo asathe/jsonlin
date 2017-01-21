@@ -98,7 +98,7 @@ class JsonPath(path: String) : JsonVisitor {
 }
 
 class JsonObject() : JsonType {
-    private val entries = sortedMapOf<String, JsonType>()
+    private val entries = linkedMapOf<String, JsonType>()
 
     constructor(data: Map<*, *>) : this() {
         data.forEach { entries.put(it.key.toString(), convert(it.value)) }
