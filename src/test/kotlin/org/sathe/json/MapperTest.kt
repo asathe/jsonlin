@@ -7,6 +7,7 @@ import java.io.Serializable
 import java.math.BigDecimal
 import java.time.LocalDate
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
 enum class AnEnum {
@@ -37,6 +38,21 @@ class MapperTest {
         val mapper = Json(instanceOf(ExampleBean::class) to ToStringMapper())
 
         assertEquals("\"ExampleBean\"", mapper.toJson(bean))
+    }
+
+    @Test
+    fun canConvertBooleans() {
+        val booleans = obj(
+                "textTrue" to "true",
+                "textFalse" to "false",
+                "booleanTrue" to true,
+                "booleanFalse" to false
+        )
+
+        assertTrue(mapper.fromJson(booleans.child("textTrue"), Boolean::class)!!)
+        assertTrue(mapper.fromJson(booleans.child("booleanTrue"), Boolean::class)!!)
+        assertFalse(mapper.fromJson(booleans.child("textFalse"), Boolean::class)!!)
+        assertFalse(mapper.fromJson(booleans.child("booleanFalse"), Boolean::class)!!)
     }
 
     @Test

@@ -321,7 +321,11 @@ class JsonValue(val value: Any?) : JsonType {
         else -> throw JsonException("Expecting an integer but got $value")
     }
 
-    fun boolean(): Boolean = if (value is Boolean) value else throw JsonException("Expecting a boolean but got $value")
+    fun boolean(): Boolean = when (value) {
+        is Boolean -> value
+        is String -> value.toBoolean()
+        else -> throw JsonException("Expecting a boolean but got $value")
+    }
 
     override fun toString(): String = toJson(Minimal())
 
