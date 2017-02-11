@@ -350,9 +350,8 @@ private fun convert(value: Any?): JsonType {
     return when (value) {
         null -> JsonNull()
         is JsonType -> value
-        is Int -> JsonValue(value)
         is String -> JsonValue(value)
-        is BigDecimal -> JsonValue(value)
+        is Number -> JsonValue(value)
         is Boolean -> JsonValue(value)
         is Enum<*> -> JsonValue(value.name)
         is Map<*, *> -> JsonObject(value)
@@ -366,8 +365,6 @@ fun obj(entries: Map<String, JsonType>): JsonObject = JsonObject(entries)
 fun array(vararg entries: Any?): JsonArray = JsonArray(listOf(*entries))
 fun array(entries: List<Any>): JsonArray = JsonArray(entries)
 fun value(value: String): JsonValue = JsonValue(value)
-fun value(value: Int): JsonValue = JsonValue(value)
-fun value(value: BigDecimal): JsonValue = JsonValue(value)
-fun value(value: BigInteger): JsonValue = JsonValue(value)
+fun value(value: Number): JsonValue = JsonValue(value)
 fun value(value: Boolean): JsonValue = JsonValue(value)
 
