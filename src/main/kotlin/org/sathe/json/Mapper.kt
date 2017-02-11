@@ -17,6 +17,7 @@ interface Context {
     fun <T : Any> fromJsonAsStream(json: InputStream, type: KClass<T>): Iterable<T?>
     fun <T : Any> fromJson(json: InputStream, type: KClass<T>): T?
     fun <T : Any> fromJson(json: JsonType, type: KClass<T>): T?
+    fun <T : Any> fromJson(json: JsonArray, nestedType: KClass<T>): List<T?>
     fun <T : Any> toJsonType(value: T?): JsonType
     fun toJson(value: Any): String = toJsonType(value).toJson()
 }
@@ -166,6 +167,10 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
                 }
             }
         }
+    }
+
+    override fun <T : Any> fromJson(json: JsonArray, nestedType: KClass<T>): List<T?> {
+        return json.map { fromJson(it, nestedType) }
     }
 
     @Suppress("UNCHECKED_CAST")

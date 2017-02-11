@@ -90,6 +90,14 @@ class MapperTest {
     }
 
     @Test
+    fun canDealWithListsWithKnownNestedType() {
+        val json = array("item1", "item2")
+        val list = mapper.fromJson(json, String::class)
+
+        assertEquals(listOf("item1", "item2"), list)
+    }
+
+    @Test
     fun canDealWithListsOfLists() {
         val obj = obj(
                 "type" to "org.sathe.json.ExampleBean",
