@@ -14,7 +14,8 @@ import kotlin.reflect.jvm.javaField
 import kotlin.reflect.memberProperties
 
 interface Context {
-    fun <T : Any> fromJsonAsStream(json: InputStream, type: KClass<T>): Iterable<T?>
+    fun <T : Any> fromJsonAsStream(json: InputStream, nestedType: KClass<T>): Iterable<T?>
+    fun <T : Any> fromJson(json: String, type: KClass<T>): T?
     fun <T : Any> fromJson(json: InputStream, type: KClass<T>): T?
     fun <T : Any> fromJson(json: JsonType, type: KClass<T>): T?
     fun <T : Any> fromJson(json: JsonArray, nestedType: KClass<T>): List<T?>
@@ -156,18 +157,20 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
         return fromJson(JsonParser(JsonLexer(json)).parse(), type)
     }
 
-    override fun <T : Any> fromJsonAsStream(json: InputStream, type: KClass<T>): Iterable<T?> {
+    override fun <T : Any> fromJsonAsStream(json: InputStream, nestedType: KClass<T>): Iterable<T?> {
         val list = JsonParser(JsonLexer(json)).parseListAsStream()
         return object: Iterable<T?> {
             override fun iterator(): Iterator<T?> {
                 return object: Iterator<T?> {
                     private val iterator = list.iterator()
                     override fun hasNext(): Boolean = iterator.hasNext()
-                    override fun next(): T? = fromJson(iterator.next(), type)
+                    override fun next(): T? = fromJson(iterator.next(), nestedType)
                 }
             }
         }
     }
+
+    override fun <T : Any> fromJson(json: String, type: KClass<T>): T? = fromJson(json.byteInputStream(), type)
 
     override fun <T : Any> fromJson(json: JsonArray, nestedType: KClass<T>): List<T?> {
         return json.map { fromJson(it, nestedType) }
