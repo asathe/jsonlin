@@ -34,7 +34,7 @@ abstract class MapperAdapter<T : Any> : Mapper<T> {
 }
 
 class ToStringMapper : Mapper<Any> {
-    override fun fromJson(json: JsonType, type: KClass<Any>, context: Context): Any = throw UnsupportedOperationException("Only serialising supported with the ToStringMapper")
+    override fun fromJson(json: JsonType, type: KClass<Any>, context: Context): Any = throw JsonException("Only serialising supported with the ToStringMapper")
     override fun toJson(value: Any, context: Context): JsonType = value(value.toString())
 }
 

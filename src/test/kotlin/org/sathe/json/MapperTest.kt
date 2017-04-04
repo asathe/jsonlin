@@ -40,6 +40,29 @@ class MapperTest {
         assertEquals("\"ExampleBean\"", mapper.toJson(bean))
     }
 
+    @Test(expected = JsonException::class)
+    fun cannotDeserialiseWithToString() {
+        val bean = ExampleBean()
+        val mapper = Json(instanceOf(ExampleBean::class) to ToStringMapper())
+
+        mapper.fromJson(mapper.toJson(bean), ExampleBean::class)
+    }
+
+    @Test(expected = JsonException::class)
+    fun mapperAdapterAlwaysFailsToSerialise() {
+        val bean = ExampleBean()
+        val mapper = Json(instanceOf(ExampleBean::class) to object : MapperAdapter<Any>(){})
+
+        mapper.toJson(bean)
+    }
+
+    @Test(expected = JsonException::class)
+    fun mapperAdapterAlwaysFailsToDeserialise() {
+        val mapper = Json(instanceOf(ExampleBean::class) to object : MapperAdapter<Any>(){})
+
+        mapper.fromJson("{}", ExampleBean::class)
+    }
+
     @Test
     fun canConvertBooleans() {
         val booleans = obj(

@@ -251,6 +251,23 @@ class JsonTest {
     }
 
     @Test
+    fun canDeserialiseAsAStream() {
+        val stream = JsonParser("[\"moo\"]").parseListAsStream()
+        assertEquals(value("moo"), stream.first())
+    }
+
+    @Test(expected = JsonException::class)
+    fun cannotDeserialiseNonArrayTypesAsAStream() {
+        JsonParser("{}").parseListAsStream()
+    }
+
+    @Test(expected = JsonException::class)
+    fun failsIfListIsBadlyFormed() {
+        val stream = JsonParser("[\"moo\"\"cow\"]").parseListAsStream()
+        stream.first()
+    }
+
+    @Test
     fun canDeserialiseDeeplyNestedStructures() {
         assertEquals(array(array(array(array(array(array(array(array(array(array(array(array(array(false))))))))))))),
                 JsonParser("[[[[[[[[[[[[[false]]]]]]]]]]]]]").parse())
