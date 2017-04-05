@@ -137,6 +137,22 @@ class MapperTest {
     }
 
     @Test
+    fun generateJsonArraysFromJson() {
+        val json = array("item1", "item2").toJson()
+        val rehydrated = mapper.fromJson(json.byteInputStream())
+
+        assertEquals(array("item1", "item2"), rehydrated)
+    }
+
+    @Test
+    fun generateJsonObjectsFromJson() {
+        val json = obj("key" to "value").toJson()
+        val rehydrated = mapper.fromJson(json.byteInputStream())
+
+        assertEquals(obj("key" to "value"), rehydrated)
+    }
+
+    @Test
     fun canDealWithListsOfLists() {
         val obj = obj(
                 "type" to "org.sathe.json.ExampleBean",

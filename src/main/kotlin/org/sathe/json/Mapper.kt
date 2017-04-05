@@ -20,6 +20,7 @@ interface Context {
     fun <T : Any> fromJson(json: JsonType, type: KClass<T>): T?
     fun <T : Any> fromJson(json: JsonArray, nestedType: KClass<T>): List<T?>
     fun <T : Any> toJsonType(value: T?): JsonType
+    fun fromJson(json: InputStream): JsonType
     fun toJson(value: Any): String = toJsonType(value).toJson()
 }
 
@@ -155,6 +156,10 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
 
     override fun <T : Any> fromJson(json: InputStream, type: KClass<T>): T? {
         return fromJson(JsonParser(JsonLexer(json)).parse(), type)
+    }
+
+    override fun fromJson(json: InputStream): JsonType {
+        return JsonParser(JsonLexer(json)).parse()
     }
 
     override fun <T : Any> fromJsonAsStream(json: InputStream, nestedType: KClass<T>): Iterable<T?> {
