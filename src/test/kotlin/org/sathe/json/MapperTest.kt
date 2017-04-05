@@ -186,4 +186,22 @@ class MapperTest {
   "type" : "org.sathe.json.ExampleBean"
 }""", json)
     }
+
+    @Test
+    fun handlesSerialisableTypesThroughReflection() {
+        class SomeData() : Serializable {
+            var value: String? = null
+            var date: LocalDate? = null
+        }
+
+        val data = SomeData()
+        data.value = "a value"
+        data.date = LocalDate.now()
+
+        val json = mapper.toJson(data)
+
+        val rehydrated = mapper.fromJson(json, SomeData::class)!!
+        assertEquals("a value", rehydrated.value)
+        assertEquals(LocalDate.now(), rehydrated.date)
+    }
 }
