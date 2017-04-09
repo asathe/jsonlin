@@ -7,7 +7,7 @@ Supports:
 * Supports <code>find()</code>ing nested types
 * You can add mappers to convert to/from JSON to concrete types
 * Inbuilt mappers for
-* * Primitives
-* * java.time.LocalDate and LocalDateTime
-* * Enums
-* * Basic reflection (in progress) for serializable types
+** Primitives
+** java.time.LocalDate and LocalDateTime
+** Enums
+** Basic reflection (in progress) for serializable types
