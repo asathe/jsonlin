@@ -7,30 +7,13 @@ import java.io.Serializable
 import java.math.BigDecimal
 import java.time.LocalDate
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
-enum class AnEnum {
-    Entry1, Entry2
-}
-
-class ExampleBean() : Serializable {
-    var field1: String? = null
-    var field2: String? = null
-    var date1: LocalDate? = null
-    var int1: Int? = null
-    var bool1: Boolean? = null
-    var dec1: BigDecimal? = null
-    var list1: List<String>? = null
-    var listOfLists: List<List<String>>? = null
-    var enum1: AnEnum? = null
-
-    override fun toString(): String = "ExampleBean"
-}
-
-private val mapper = Json()
-
 class MapperTest {
+
+    private val mapper = Json()
 
     @Test
     fun canUseTheToStringMapper() {
@@ -40,27 +23,50 @@ class MapperTest {
         assertEquals("\"ExampleBean\"", mapper.toJson(bean))
     }
 
-    @Test(expected = JsonException::class)
+    @Test
     fun cannotDeserialiseWithToString() {
         val bean = ExampleBean()
         val mapper = Json(instanceOf(ExampleBean::class) to ToStringMapper())
 
-        mapper.fromJson(mapper.toJson(bean), ExampleBean::class)
+        assertFailsWith<JsonException> {
+            mapper.fromJson(mapper.toJson(bean), ExampleBean::class)
+        }
     }
 
-    @Test(expected = JsonException::class)
+    @Test
     fun mapperAdapterAlwaysFailsToSerialise() {
         val bean = ExampleBean()
         val mapper = Json(instanceOf(ExampleBean::class) to object : MapperAdapter<Any>(){})
 
-        mapper.toJson(bean)
+        assertFailsWith<JsonException> {
+            mapper.toJson(bean)
+        }
     }
 
-    @Test(expected = JsonException::class)
+    @Test
     fun mapperAdapterAlwaysFailsToDeserialise() {
         val mapper = Json(instanceOf(ExampleBean::class) to object : MapperAdapter<Any>(){})
 
-        mapper.fromJson("{}", ExampleBean::class)
+        assertFailsWith<JsonException> {
+            mapper.fromJson("{}", ExampleBean::class)
+        }
+    }
+
+    @Test
+    fun deserialisesSimpleTypes() {
+        assertEquals(123, mapper.fromJson("123", Int::class))
+        assertEquals(123.0, mapper.fromJson("123.0", Double::class))
+        assertEquals(BigDecimal("123"), mapper.fromJson("123", BigDecimal::class))
+        assertEquals(BigDecimal("123.45"), mapper.fromJson("123.45", BigDecimal::class))
+        assertEquals(true, mapper.fromJson("true", Boolean::class))
+    }
+
+    @Test
+    fun serialisesSimpleTypes() {
+        assertEquals("true", mapper.toJson(true))
+        assertEquals("123", mapper.toJson(123))
+        assertEquals("123", mapper.toJson(123.0))
+        assertEquals("123.45", mapper.toJson(BigDecimal("123.45")))
     }
 
     @Test
@@ -88,7 +94,7 @@ class MapperTest {
                 "int1" to 123,
                 "bool1" to true,
                 "dec1" to BigDecimal("123.56"),
-                "enum1" to AnEnum.Entry1,
+                "enum1" to ExampleEnum.Entry1,
                 "list1" to array("item1", "item2")
         )
 
@@ -100,7 +106,7 @@ class MapperTest {
         assertEquals(BigDecimal("123.56"), parsed.dec1)
         assertEquals(LocalDate.parse("2016-11-19"), parsed.date1)
         assertTrue(parsed.bool1!!)
-        assertEquals(AnEnum.Entry1, parsed.enum1)
+        assertEquals(ExampleEnum.Entry1, parsed.enum1)
         assertEquals(listOf("item1", "item2"), parsed.list1)
 
         parsed = mapper.fromJson(obj, ExampleBean::class)!!

@@ -294,7 +294,7 @@ private fun encodedCharacterFor(c: Char): String {
     return encoded ?: c.toString()
 }
 
-class JsonValue(val value: Any?) : JsonType {
+class JsonValue(val value: Any) : JsonType {
     override fun toJson(writer: Writer, format: JsonFormat) {
         when (value) {
             is String -> encoded(writer, value)
@@ -310,6 +310,7 @@ class JsonValue(val value: Any?) : JsonType {
 
     fun decimal(): BigDecimal = when (value) {
         is BigDecimal -> value
+        is BigInteger -> BigDecimal(value)
         is String -> BigDecimal(value)
         else -> throw JsonException("Expecting a decimal but got $value")
     }
@@ -329,9 +330,9 @@ class JsonValue(val value: Any?) : JsonType {
 
     override fun toString(): String = toJson(Minimal())
 
-    override fun equals(other: Any?): Boolean = if (other is JsonValue) value!! == other.value else false
+    override fun equals(other: Any?): Boolean = if (other is JsonValue) value == other.value else false
 
-    override fun hashCode(): Int = value!!.hashCode()
+    override fun hashCode(): Int = value.hashCode()
 }
 
 class JsonNull : JsonType {
