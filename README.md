@@ -1,4 +1,4 @@
-## JSONLIN - A(nother) JSON parser/lexer library with support for mappers
+## JSONLIN - A(nother) JSON parser/lexer library
 
 Yet another JSON library written as a way to help me explore the Kotlin language
 
