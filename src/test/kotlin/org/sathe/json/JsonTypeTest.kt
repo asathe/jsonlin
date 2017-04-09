@@ -1,5 +1,6 @@
 package org.sathe.json
 
+import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Test
@@ -52,20 +53,28 @@ class JsonTypeTest {
         assertEquals("true", obj.string("aBool"))
         assertEquals(JsonNull(), obj.child("aNull"))
 
-        assertFailsWith<JsonException>("No entry for 'missing'") {
+        assertFailsWith<JsonException> {
             obj.string("missing")
+        }.let {
+            assertEquals("No entry for 'missing'", it.message)
         }
 
-        assertFailsWith<JsonException>("Expecting a decimal but got 123") {
+        assertFailsWith<JsonException> {
             obj.decimal("anInt")
+        }.let {
+            assertEquals("Expecting a decimal but got 123", it.message)
         }
 
-        assertFailsWith<JsonException>("Expecting an integer but got 12.34") {
+        assertFailsWith<JsonException> {
             obj.integer("aDecimal")
+        }.let {
+            assertEquals("Expecting an integer but got 12.34", it.message)
         }
 
-        assertFailsWith<JsonException>("Expecting an boolean but got 12.34") {
+        assertFailsWith<JsonException> {
             obj.boolean("aDecimal")
+        }.let {
+            assertEquals("Expecting a boolean but got 12.34", it.message)
         }
     }
 
@@ -88,6 +97,75 @@ class JsonTypeTest {
         val obj = obj()
         obj.add("keyInt", array("moo", "cow"))
         assertEquals(array("moo", "cow"), obj.list("keyInt"))
+    }
+
+    @Test
+    fun canFindAnElementInATree() {
+        val json = obj("moo" to obj("cow" to value("woo!")))
+        assertEquals(json.find("moo.cow"), value("woo!"))
+    }
+
+    @Test
+    fun canFindAnElementInATreeInAList() {
+        val json = obj("moo" to obj("cow" to array(value("woo!"))))
+        assertEquals(json.find("moo.cow[0]"), value("woo!"))
+    }
+
+    @Test
+    fun canFindDeeplyNestedItems() {
+        val json = obj("moo" to array(obj("cow1" to array(1, 2)), obj("cow2" to array(3, 4))))
+        assertEquals(obj("cow1" to array(1, 2)), json.find("moo[0]"))
+        assertEquals(array(1, 2), json.find("moo[0].cow1"))
+        assertEquals(value(4), json.find("moo[1].cow2[1]"))
+    }
+
+    @Test
+    fun blowsUpIfNotFoundOnAnObject() {
+        val json = obj("moo" to array(obj("cow1" to array(1, 2)), obj("cow2" to array(3, 4))))
+
+        assertFailsWith<JsonException> { json.find("moo[1].cow3[1]") }.let {
+            assertThat(it.message, containsString("Unable to find cow3"))
+        }
+    }
+
+    @Test
+    fun blowsUpIfNotFoundOnAList() {
+        val json = obj("moo" to array(obj("cow1" to array(1, 2)), obj("cow2" to array(3, 4))))
+
+        assertFailsWith<JsonException> { json.find("moo[1].cow2[3]") }.let {
+            assertThat(it.message, containsString("Index 3 not found"))
+        }
+    }
+
+    @Test
+    fun returnsTheValueOnAnEmptyPath() {
+        val json = value("moo")
+
+        assertEquals(value("moo"), json.find(""))
+    }
+
+    @Test
+    fun returnsNulls() {
+        val json = obj("moo" to null)
+
+        assertEquals(JsonNull(), json.find("moo"))
+    }
+
+    @Test
+    fun canFindPathsInStreamsButConsumesEntriesUpToRequestedIndex() {
+        val stream = JsonParser("[{\"moo\": \"cow\"}, {\"bah\": \"sheep\"}]").parseListAsStream()
+
+        assertEquals(value("cow"), stream.find("[0].moo"))
+        assertEquals(value("sheep"), stream.find("[0].bah"))
+    }
+
+    @Test
+    fun blowsUpIfWeHaveAPathOnALeaf() {
+        val json = value("moo")
+
+        assertFailsWith<JsonException> { json.find("cow") }.let {
+            assertEquals("Path \"cow\" goes beyond a leaf - found \"moo\"", it.message)
+        }
     }
 
 }

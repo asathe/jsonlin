@@ -1,13 +1,11 @@
 package org.sathe.json
 
 import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.CoreMatchers.startsWith
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
 import java.math.BigDecimal
-import java.math.BigInteger
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
@@ -206,75 +204,4 @@ class JsonTest {
                 JsonParser("[[[[[[[[[[[[[false]]]]]]]]]]]]]").parse())
     }
 
-    @Test
-    fun canFindAnElementInATree() {
-        val json = obj("moo" to obj("cow" to value("woo!")))
-        assertEquals(json.find("moo.cow"), value("woo!"))
-    }
-
-    @Test
-    fun canFindAnElementInATreeInAList() {
-        val json = obj("moo" to obj("cow" to array(value("woo!"))))
-        assertEquals(json.find("moo.cow[0]"), value("woo!"))
-    }
-
-    @Test
-    fun canFindDeeplyNestedItems() {
-        val json = obj("moo" to array(obj("cow1" to array(1, 2)), obj("cow2" to array(3, 4))))
-        assertEquals(obj("cow1" to array(1, 2)), json.find("moo[0]"))
-        assertEquals(array(1, 2), json.find("moo[0].cow1"))
-        assertEquals(value(4), json.find("moo[1].cow2[1]"))
-    }
-
-    @Test
-    fun blowsUpIfNotFoundOnAnObject() {
-        val json = obj("moo" to array(obj("cow1" to array(1, 2)), obj("cow2" to array(3, 4))))
-
-        exception.expect(JsonException::class.java)
-        exception.expectMessage(startsWith("Unable to find cow3"))
-
-        json.find("moo[1].cow3[1]")
-    }
-
-    @Test
-    fun blowsUpIfNotFoundOnAList() {
-        val json = obj("moo" to array(obj("cow1" to array(1, 2)), obj("cow2" to array(3, 4))))
-
-        exception.expect(JsonException::class.java)
-        exception.expectMessage(startsWith("Index 3 not found"))
-
-        json.find("moo[1].cow2[3]")
-    }
-
-    @Test
-    fun returnsTheValueOnAnEmptyPath() {
-        val json = value("moo")
-
-        assertEquals(value("moo"), json.find(""))
-    }
-
-    @Test
-    fun returnsNulls() {
-        val json = obj("moo" to null)
-
-        assertEquals(JsonNull(), json.find("moo"))
-    }
-
-    @Test
-    fun canFindPathsInStreamsButConsumesEntriesUpToRequestedIndex() {
-        val stream = JsonParser("[{\"moo\": \"cow\"}, {\"bah\": \"sheep\"}]").parseListAsStream()
-
-        assertEquals(value("cow"), stream.find("[0].moo"))
-        assertEquals(value("sheep"), stream.find("[0].bah"))
-    }
-
-    @Test
-    fun blowsUpIfWeHaveAPathOnALeaf() {
-        val json = value("moo")
-
-        exception.expect(JsonException::class.java)
-        exception.expectMessage(startsWith("Path \"cow\" goes beyond a leaf - found \"moo\""))
-
-        json.find("cow")
-    }
 }
