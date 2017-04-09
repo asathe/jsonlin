@@ -360,7 +360,7 @@ private fun convert(value: Any?): JsonType {
     }
 }
 
-fun obj(vararg entries: Pair<String, *>): JsonObject = JsonObject(sortedMapOf(*entries))
+fun obj(vararg entries: Pair<String, *>): JsonObject = JsonObject(linkedMapOf(*entries))
 fun obj(entries: Map<String, JsonType>): JsonObject = JsonObject(entries)
 fun array(vararg entries: Any?): JsonArray = JsonArray(listOf(*entries))
 fun array(entries: List<Any>): JsonArray = JsonArray(entries)

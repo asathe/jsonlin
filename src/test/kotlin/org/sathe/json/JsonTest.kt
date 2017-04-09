@@ -32,10 +32,10 @@ class JsonTest {
                 ))
 
         assertEquals("""{
-  "booField" : false,
-  "boolField" : true,
   "field1" : "value1",
   "field2" : "value2",
+  "boolField" : true,
+  "booField" : false,
   "listField1" : [
     {
       "subField1" : "subValue1"
@@ -47,10 +47,10 @@ class JsonTest {
   ]
 }""", obj.toJson())
 
-        assertEquals("""{"booField":false,"boolField":true,"field1":"value1","field2":"value2","listField1":[{"subField1":"subValue1"},null,{"subField2":"subValue2"}]}""",
+        assertEquals("""{"field1":"value1","field2":"value2","boolField":true,"booField":false,"listField1":[{"subField1":"subValue1"},null,{"subField2":"subValue2"}]}""",
                 obj.toJson(Minimal()))
 
-        assertEquals("""{ "booField" : false, "boolField" : true, "field1" : "value1", "field2" : "value2", "listField1" : [ { "subField1" : "subValue1" }, null, { "subField2" : "subValue2" } ] }""",
+        assertEquals("""{ "field1" : "value1", "field2" : "value2", "boolField" : true, "booField" : false, "listField1" : [ { "subField1" : "subValue1" }, null, { "subField2" : "subValue2" } ] }""",
                 obj.toJson(OneLiner()))
     }
 
@@ -133,7 +133,7 @@ class JsonTest {
     fun canSerialiseNulls() {
         val obj = obj("aList" to listOf(null, null), "987" to null)
 
-        assertEquals("""{"987":null,"aList":[null,null]}""", obj.toJson(Minimal()))
+        assertEquals("""{"aList":[null,null],"987":null}""", obj.toJson(Minimal()))
     }
 
     @Test
