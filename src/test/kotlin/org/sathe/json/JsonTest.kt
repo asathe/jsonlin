@@ -10,6 +10,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 import kotlin.text.Charsets.UTF_16
 
 class JsonTest {
@@ -256,6 +257,12 @@ class JsonTest {
         assertEquals(value("moo"), stream.first())
     }
 
+    @Test
+    fun canDeserialiseAnEmptyStream() {
+        val stream = JsonParser("[]").parseListAsStream()
+        assertTrue(stream.toList().isEmpty())
+    }
+
     @Test(expected = JsonException::class)
     fun cannotDeserialiseNonArrayTypesAsAStream() {
         JsonParser("{}").parseListAsStream()
@@ -264,7 +271,8 @@ class JsonTest {
     @Test(expected = JsonException::class)
     fun failsIfListIsBadlyFormed() {
         val stream = JsonParser("[\"moo\"\"cow\"]").parseListAsStream()
-        stream.first()
+        assertEquals(value("moo"), stream.first())
+        assertEquals(value("cow"), stream.first())
     }
 
     @Test

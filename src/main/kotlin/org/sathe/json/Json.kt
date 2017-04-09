@@ -18,22 +18,21 @@ class JsonParser(val lexer: Iterator<Any?>) {
         assertThat(firstToken == "[", { "expecting start of array but got $firstToken" })
 
         return JsonStream(object : Iterator<JsonType> {
-
-            private var hasNext = true
+            private var size = 0
+            private var currentToken = lexer.next()
 
             override fun next(): JsonType {
-                val type = parse(lexer.next())
-                val token = lexer.next()
-                hasNext = when (token) {
-                    "," -> true
-                    "]" -> false
-                    else -> throw JsonException("expecting separator or end of array but got $token")
+                if (++size > 1) {
+                    assertThat(currentToken == ",", { "expecting list separator but got $currentToken"})
+                    currentToken = lexer.next()
                 }
 
+                val type = parse(currentToken)
+                currentToken = lexer.next()
                 return type
             }
 
-            override fun hasNext(): Boolean = hasNext
+            override fun hasNext(): Boolean = currentToken != "]"
         })
     }
 
