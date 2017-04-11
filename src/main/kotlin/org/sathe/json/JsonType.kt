@@ -47,14 +47,19 @@ class JsonPath(path: String) : JsonVisitor {
             return
         }
         var token = tokens.nextToken()
-        if (token == ".") {
-            token = tokens.nextToken()
-        }
+        if (token == ".") token = tokens.nextToken()
+
+        json.child(generateKey(token, json)).accept(this)
+    }
+
+    private tailrec fun generateKey(token: String, json: JsonObject): String {
         if (json.hasChild(token)) {
-            json.child(token).accept(this)
-        } else {
+            return token
+        }
+        if (!tokens.hasMoreTokens()) {
             throw JsonException("Unable to find $token in $json")
         }
+        return generateKey(token + tokens.nextToken(), json)
     }
 
     override fun visit(json: JsonArray) {

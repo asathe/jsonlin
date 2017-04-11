@@ -112,6 +112,19 @@ class JsonTypeTest {
     }
 
     @Test
+    fun canFindAnElementWithPathLikeKey() {
+        val json = obj("moo.cow[1]/bah" to "sheep")
+        assertEquals(value("sheep"), json.find("moo.cow[1]/bah"))
+
+        assertFailsWith<JsonException> { json.find("moo.cow[1]") }.let {
+            assertThat(it.message, containsString("Unable to find moo.cow[1]"))
+        }
+        assertFailsWith<JsonException> { json.find("moo") }.let {
+            assertThat(it.message, containsString("Unable to find moo"))
+        }
+    }
+
+    @Test
     fun canFindDeeplyNestedItems() {
         val json = obj("moo" to array(obj("cow1" to array(1, 2)), obj("cow2" to array(3, 4))))
         assertEquals(obj("cow1" to array(1, 2)), json.find("moo[0]"))
