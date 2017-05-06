@@ -317,21 +317,25 @@ class JsonValue(val value: Any) : JsonType {
         is BigDecimal -> value
         is BigInteger -> BigDecimal(value)
         is String -> BigDecimal(value)
-        else -> throw JsonException("Expecting a decimal but got $value")
+        is Int -> BigDecimal(value)
+        else -> throw incorrectType("decimal")
     }
 
     fun integer(): Int = when (value) {
         is BigInteger -> value.intValueExact()
         is Int -> value
         is String -> value.toInt()
-        else -> throw JsonException("Expecting an integer but got $value")
+        else -> throw incorrectType("integer")
     }
 
     fun boolean(): Boolean = when (value) {
         is Boolean -> value
         is String -> value.toBoolean()
-        else -> throw JsonException("Expecting a boolean but got $value")
+        else -> throw incorrectType("boolean")
     }
+
+    fun incorrectType(type: String): JsonException =
+            JsonException("Expecting a $type but got $value (${value.javaClass.simpleName})")
 
     override fun toString(): String = toJson(Minimal())
 
