@@ -61,6 +61,6 @@ class OneLiner : JsonFormat {
 
     override fun separator(): String = " : "
 
-    override fun startItem(): String = "$indent"
+    override fun startItem(): String = indent
 
 }

@@ -106,7 +106,7 @@ class JsonObject() : JsonType {
     private val entries = linkedMapOf<String, JsonType>()
 
     constructor(data: Map<*, *>) : this() {
-        data.forEach { entries.put(it.key.toString(), convert(it.value)) }
+        data.forEach { entries[it.key.toString()] = convert(it.value) }
     }
 
     override fun toJson(writer: Writer, format: JsonFormat) {
@@ -127,32 +127,32 @@ class JsonObject() : JsonType {
     }
 
     fun add(key: String, item: JsonType): JsonObject {
-        entries.put(key, item)
+        entries[key] = item
         return this
     }
 
     fun add(key: String, item: String): JsonObject {
-        entries.put(key, value(item))
+        entries[key] = value(item)
         return this
     }
 
     fun add(key: String, item: BigDecimal): JsonObject {
-        entries.put(key, value(item))
+        entries[key] = value(item)
         return this
     }
 
     fun add(key: String, item: Int): JsonObject {
-        entries.put(key, value(item))
+        entries[key] = value(item)
         return this
     }
 
     fun add(key: String, item: BigInteger): JsonObject {
-        entries.put(key, value(item))
+        entries[key] = value(item)
         return this
     }
 
     fun add(key: String, item: Boolean): JsonObject {
-        entries.put(key, value(item))
+        entries[key] = value(item)
         return this
     }
 
@@ -166,32 +166,32 @@ class JsonObject() : JsonType {
 
     fun string(key: String): String {
         val value = entries[key] ?: throw JsonException("No entry for '$key'")
-        return if (value is JsonValue) value.string()
-        else throw JsonException("Expecting a string for '$key' but got '$value'")
+        return (value as? JsonValue)?.string()
+                ?: throw JsonException("Expecting a string for '$key' but got '$value'")
     }
 
     fun decimal(key: String): BigDecimal {
         val value = entries[key] ?: throw JsonException("No entry for '$key'")
-        return if (value is JsonValue) value.decimal()
-        else throw JsonException("Expecting a decimal for '$key' but got '$value'")
+        return (value as? JsonValue)?.decimal()
+                ?: throw JsonException("Expecting a decimal for '$key' but got '$value'")
     }
 
     fun integer(key: String): Int {
         val value = entries[key] ?: throw JsonException("No entry for '$key'")
-        return if (value is JsonValue) value.integer()
-        else throw JsonException("Expecting an integer for '$key' but got '$value'")
+        return (value as? JsonValue)?.integer()
+                ?: throw JsonException("Expecting an integer for '$key' but got '$value'")
     }
 
     fun boolean(key: String): Boolean {
         val value = entries[key] ?: throw JsonException("No entry for '$key'")
-        return if (value is JsonValue) value.boolean()
-        else throw JsonException("Expecting a boolean for '$key' but got '$value'")
+        return (value as? JsonValue)?.boolean()
+                ?: throw JsonException("Expecting a boolean for '$key' but got '$value'")
     }
 
     fun list(key: String): JsonArray {
         val value = entries[key] ?: throw JsonException("No entry for '$key'")
-        return if (value is JsonArray) value
-        else throw JsonException("Expecting a list for '$key' but got '$value'")
+        return value as? JsonArray
+                ?: throw JsonException("Expecting a list for '$key' but got '$value'")
     }
 
     override fun toString(): String = toJson(Minimal())
@@ -207,7 +207,7 @@ class JsonObject() : JsonType {
     }
 }
 
-class JsonStream(val types: Iterator<JsonType>) : JsonType, Iterable<JsonType> {
+class JsonStream(private val types: Iterator<JsonType>) : JsonType, Iterable<JsonType> {
     override fun toJson(writer: Writer, format: JsonFormat) {
         writer.write(format.startList())
         types.forEach { item ->
@@ -299,7 +299,7 @@ private fun encodedCharacterFor(c: Char): String {
     return encoded ?: c.toString()
 }
 
-class JsonValue(val value: Any) : JsonType {
+class JsonValue(private val value: Any) : JsonType {
     override fun toJson(writer: Writer, format: JsonFormat) {
         when (value) {
             is String -> encoded(writer, value)
@@ -334,7 +334,7 @@ class JsonValue(val value: Any) : JsonType {
         else -> throw incorrectType("boolean")
     }
 
-    fun incorrectType(type: String): JsonException =
+    private fun incorrectType(type: String): JsonException =
             JsonException("Expecting a $type but got $value (${value.javaClass.simpleName})")
 
     override fun toString(): String = toJson(Minimal())
@@ -366,7 +366,7 @@ private fun convert(value: Any?): JsonType {
         is Enum<*> -> JsonValue(value.name)
         is Map<*, *> -> JsonObject(value)
         is List<*> -> JsonArray(value)
-        else -> throw JsonException("Unable to convert " + value)
+        else -> throw JsonException("Unable to convert $value")
     }
 }
 

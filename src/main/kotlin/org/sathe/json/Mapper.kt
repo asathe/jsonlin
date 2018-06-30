@@ -98,7 +98,7 @@ class ReflectionMapper : Mapper<Any> {
 private enum class AnEnumSoWeCanRegisterWithTheMapper
 
 class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
-    val mappers: Map<MapperScope, Mapper<*>> = linkedMapOf(*customMappers) + linkedMapOf(
+    private val mappers: Map<MapperScope, Mapper<*>> = linkedMapOf(*customMappers) + linkedMapOf(
             instanceOf(String::class) to object : Mapper<String> {
                 override fun fromJson(json: JsonType, type: KClass<String>, context: Context): String = (json as JsonValue).string()
                 override fun toJson(value: String, context: Context): JsonType = value(value)
