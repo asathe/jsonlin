@@ -148,8 +148,8 @@ class JsonTest {
         assertEquals(value(false), JsonParser("false").parse())
         assertEquals(JsonNull(), JsonParser("null").parse())
 
-        assertFailsWith<JsonException>() { JsonParser("tune").parse() }
-        assertFailsWith<JsonException>() { JsonParser("farce").parse() }
+        assertFailsWith<JsonException> { JsonParser("tune").parse() }
+        assertFailsWith<JsonException> { JsonParser("farce").parse() }
     }
 
     @Test

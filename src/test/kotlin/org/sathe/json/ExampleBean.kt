@@ -4,7 +4,7 @@ import java.io.Serializable
 import java.math.BigDecimal
 import java.time.LocalDate
 
-class ExampleBean() : Serializable {
+class ExampleBean : Serializable {
     var field1: String? = null
     var field2: String? = null
     var date1: LocalDate? = null

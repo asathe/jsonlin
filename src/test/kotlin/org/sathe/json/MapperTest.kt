@@ -195,7 +195,7 @@ class MapperTest {
 
     @Test
     fun handlesSerialisableTypesThroughReflection() {
-        class SomeData() : Serializable {
+        class SomeData : Serializable {
             var value: String? = null
             var date: LocalDate? = null
         }
