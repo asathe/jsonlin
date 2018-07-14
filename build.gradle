@@ -2,7 +2,7 @@ group "org.github.asathe.jsonlin"
 version "0.1"
 
 buildscript {
-    ext.kotlin_version = "1.0.3"
+    ext.kotlin_version = "1.2.51"
     repositories {
         mavenCentral()
         mavenLocal()
@@ -22,11 +22,11 @@ repositories {
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-stdlib"
+    compile "org.jetbrains.kotlin:kotlin-reflect"
 
-    testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
-    testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+    testCompile "org.jetbrains.kotlin:kotlin-test"
+    testCompile "org.jetbrains.kotlin:kotlin-test-junit"
     testCompile "junit:junit:4.12"
 }
 

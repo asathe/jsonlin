@@ -37,6 +37,7 @@ class JsonTypeTest {
     @Test
     fun canExtractSimpleValuesFromAnObject() {
         val obj = obj(
+                "aList" to array("item1", "item2"),
                 "aString" to "aValue",
                 "aDecimal" to BigDecimal("12.34"),
                 "aNull" to null,
@@ -53,6 +54,8 @@ class JsonTypeTest {
         assertEquals("true", obj.string("aBool"))
         assertEquals(JsonNull(), obj.child("aNull"))
 
+        assertEquals(BigDecimal("123"), obj.decimal("anInt"))
+
         assertFailsWith<JsonException> {
             obj.string("missing")
         }.let {
@@ -60,21 +63,21 @@ class JsonTypeTest {
         }
 
         assertFailsWith<JsonException> {
-            obj.decimal("anInt")
-        }.let {
-            assertEquals("Expecting a decimal but got 123", it.message)
-        }
-
-        assertFailsWith<JsonException> {
             obj.integer("aDecimal")
         }.let {
-            assertEquals("Expecting an integer but got 12.34", it.message)
+            assertEquals("Expecting an integer but got 12.34 (BigDecimal)", it.message)
         }
 
         assertFailsWith<JsonException> {
             obj.boolean("aDecimal")
         }.let {
-            assertEquals("Expecting a boolean but got 12.34", it.message)
+            assertEquals("Expecting a boolean but got 12.34 (BigDecimal)", it.message)
+        }
+
+        assertFailsWith<ClassCastException> {
+            obj.boolean("aList")
+        }.let {
+            assertEquals("org.sathe.json.JsonArray cannot be cast to org.sathe.json.JsonValue", it.message)
         }
     }
 

@@ -103,7 +103,7 @@ class JsonPath(path: String) : JsonVisitor {
 }
 
 class JsonObject() : JsonType {
-    private val entries = linkedMapOf<String, JsonType>()
+    private val entries = LinkedHashMap<String, JsonType>()
 
     constructor(data: Map<*, *>) : this() {
         data.forEach { entries[it.key.toString()] = convert(it.value) }
@@ -166,26 +166,22 @@ class JsonObject() : JsonType {
 
     fun string(key: String): String {
         val value = entries[key] ?: throw JsonException("No entry for '$key'")
-        return (value as? JsonValue)?.string()
-                ?: throw JsonException("Expecting a string for '$key' but got '$value'")
+        return (value as JsonValue).string()
     }
 
     fun decimal(key: String): BigDecimal {
         val value = entries[key] ?: throw JsonException("No entry for '$key'")
-        return (value as? JsonValue)?.decimal()
-                ?: throw JsonException("Expecting a decimal for '$key' but got '$value'")
+        return (value as JsonValue).decimal()
     }
 
     fun integer(key: String): Int {
         val value = entries[key] ?: throw JsonException("No entry for '$key'")
-        return (value as? JsonValue)?.integer()
-                ?: throw JsonException("Expecting an integer for '$key' but got '$value'")
+        return (value as JsonValue).integer()
     }
 
     fun boolean(key: String): Boolean {
         val value = entries[key] ?: throw JsonException("No entry for '$key'")
-        return (value as? JsonValue)?.boolean()
-                ?: throw JsonException("Expecting a boolean for '$key' but got '$value'")
+        return (value as JsonValue).boolean()
     }
 
     fun list(key: String): JsonArray {
@@ -201,7 +197,7 @@ class JsonObject() : JsonType {
     override fun hashCode(): Int = entries.hashCode()
 
     fun copy(): JsonObject {
-        val copy: HashMap<String, JsonType> = hashMapOf()
+        val copy: HashMap<String, JsonType> = HashMap()
         copy.putAll(entries)
         return JsonObject(copy)
     }
@@ -318,24 +314,24 @@ class JsonValue(private val value: Any) : JsonType {
         is BigInteger -> BigDecimal(value)
         is String -> BigDecimal(value)
         is Int -> BigDecimal(value)
-        else -> throw incorrectType("decimal")
+        else -> throw incorrectType("a decimal")
     }
 
     fun integer(): Int = when (value) {
         is BigInteger -> value.intValueExact()
         is Int -> value
         is String -> value.toInt()
-        else -> throw incorrectType("integer")
+        else -> throw incorrectType("an integer")
     }
 
     fun boolean(): Boolean = when (value) {
         is Boolean -> value
         is String -> value.toBoolean()
-        else -> throw incorrectType("boolean")
+        else -> throw incorrectType("a boolean")
     }
 
     private fun incorrectType(type: String): JsonException =
-            JsonException("Expecting a $type but got $value (${value.javaClass.simpleName})")
+            JsonException("Expecting $type but got $value (${value.javaClass.simpleName})")
 
     override fun toString(): String = toJson(Minimal())
 
@@ -370,7 +366,11 @@ private fun convert(value: Any?): JsonType {
     }
 }
 
-fun obj(vararg entries: Pair<String, *>): JsonObject = JsonObject(linkedMapOf(*entries))
+fun obj(vararg entries: Pair<String, *>): JsonObject {
+    val map = LinkedHashMap<String, Any?>()
+    map.putAll(entries)
+    return JsonObject(map)
+}
 fun obj(entries: Map<String, JsonType>): JsonObject = JsonObject(entries)
 fun array(vararg entries: Any?): JsonArray = JsonArray(listOf(*entries))
 fun array(entries: List<Any>): JsonArray = JsonArray(entries)
