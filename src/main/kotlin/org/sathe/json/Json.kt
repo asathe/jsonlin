@@ -17,7 +17,7 @@ class JsonParser(val lexer: Iterator<Any?>) {
 
     fun parseListAsStream(): JsonStream {
         val firstToken = lexer.next()
-        assertThat(firstToken == "[", { "expecting start of array but got $firstToken" })
+        assertThat(firstToken == "[") { "expecting start of array but got $firstToken" }
 
         return JsonStream(object : Iterator<JsonType> {
             private var size = 0
@@ -25,7 +25,7 @@ class JsonParser(val lexer: Iterator<Any?>) {
 
             override fun next(): JsonType {
                 if (++size > 1) {
-                    assertThat(currentToken == ",", { "expecting list separator but got $currentToken"})
+                    assertThat(currentToken == ",") { "expecting list separator but got $currentToken"}
                     currentToken = lexer.next()
                 }
 
@@ -55,7 +55,7 @@ class JsonParser(val lexer: Iterator<Any?>) {
             entry = lexer.next()
             if (entry == ",") {
                 entry = lexer.next()
-                assertThat(entry != "]", { "expecting another item but got ']'" })
+                assertThat(entry != "]") { "expecting another item but got ']'" }
             }
         }
         return array
@@ -65,14 +65,14 @@ class JsonParser(val lexer: Iterator<Any?>) {
         val obj = JsonObject()
         var key = lexer.next()
         while (key != "}") {
-            assertThat(key is String, { "expected a string but got '$key'" })
+            assertThat(key is String) { "expected a string but got '$key'" }
             val separator = lexer.next()
-            assertThat(separator == ":", { "expected ':' but got '$separator'" })
+            assertThat(separator == ":") { "expected ':' but got '$separator'" }
             obj.add(key.toString(), parse())
             key = lexer.next()
             if (key == ",") {
                 key = lexer.next()
-                assertThat(key != "}", { "expecting another key but got '}'" })
+                assertThat(key != "}") { "expecting another key but got '}'" }
             }
         }
         return obj
@@ -137,7 +137,7 @@ class JsonLexer(stream: InputStream) : Iterator<Any?> {
         tokenBuilder.setLength(0)
 
         fun addDigits(firstIsMandatory: Boolean) {
-            assertThat(!firstIsMandatory || currentChar.isDigit(), { "Invalid numeric format. Current token '$tokenBuilder', was not expecting '$currentChar'" })
+            assertThat(!firstIsMandatory || currentChar.isDigit()) { "Invalid numeric format. Current token '$tokenBuilder', was not expecting '$currentChar'" }
             while (currentChar.isDigit()) {
                 appendAndFetchNext()
             }
@@ -147,7 +147,7 @@ class JsonLexer(stream: InputStream) : Iterator<Any?> {
             if (currentChar == 'e' || currentChar == 'E') {
                 isDecimal = true
                 appendAndFetchNext()
-                assertThat(currentChar == '-' || currentChar == '+' || currentChar.isDigit(), { "Invalid numeric format. Expecting +, - or digit for exponent" })
+                assertThat(currentChar == '-' || currentChar == '+' || currentChar.isDigit()) { "Invalid numeric format. Expecting +, - or digit for exponent" }
                 val signed = currentChar
                 appendAndFetchNext()
                 addDigits(signed == '-' || signed == '+')
@@ -178,14 +178,14 @@ class JsonLexer(stream: InputStream) : Iterator<Any?> {
 
     private fun booleanValue(expected: String): Boolean {
         val token = knownWord(expected.length)
-        assertThat(token == expected, { "Expecting boolean value but got $token" })
+        assertThat(token == expected) { "Expecting boolean value but got $token" }
 
         return token.toBoolean()
     }
 
     private fun nullValue(): Any? {
         val token = knownWord(4)
-        assertThat(token == "null", { "Expecting null value but got $token" })
+        assertThat(token == "null") { "Expecting null value but got $token" }
         return null
     }
 
@@ -232,7 +232,7 @@ class JsonLexer(stream: InputStream) : Iterator<Any?> {
         }
 
         while (nextChar() != '"') {
-            assertThat(currentChar != '\uFFFF', { "Unterminated string found" })
+            assertThat(currentChar != '\uFFFF') { "Unterminated string found" }
             when (currentChar) {
                 '\\' -> escapedCharacter()
                 else -> tokenBuilder.append(currentChar)

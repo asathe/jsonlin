@@ -87,7 +87,6 @@ class MapperTest {
     @Test
     fun canSerialiseAndDeserialiseASerialisableType() {
         val obj = obj(
-                "type" to "org.sathe.json.ExampleBean",
                 "field1" to "value1",
                 "field2" to "value2",
                 "date1" to "2016-11-19",
@@ -118,7 +117,6 @@ class MapperTest {
     @Test
     fun canDealWithStreams() {
         val obj = obj(
-                "type" to "org.sathe.json.ExampleBean",
                 "field1" to "value1",
                 "field2" to "value2",
                 "list1" to array("item1", "item2"),
@@ -175,7 +173,7 @@ class MapperTest {
 
     @Test
     fun canParseNullProperties() {
-        val obj = obj("type" to "org.sathe.json.ExampleBean")
+        val obj = obj()
 
         val parsed = mapper.fromJson(obj, ExampleBean::class)!!
 
@@ -188,23 +186,26 @@ class MapperTest {
 
         val json = mapper.toJson(ticket)
 
-        assertEquals("""{
-  "type" : "org.sathe.json.ExampleBean"
-}""", json)
+        assertEquals("{\n}", json)
+    }
+
+    class SomeData : Serializable {
+        var value: String? = null
+        var date: LocalDate? = null
     }
 
     @Test
     fun handlesSerialisableTypesThroughReflection() {
-        class SomeData : Serializable {
-            var value: String? = null
-            var date: LocalDate? = null
-        }
-
         val data = SomeData()
         data.value = "a value"
         data.date = LocalDate.now()
 
         val json = mapper.toJson(data)
+
+        assertEquals("""{
+  "date" : "${LocalDate.now()}",
+  "value" : "a value"
+}""".trimMargin(), json)
 
         val rehydrated = mapper.fromJson(json, SomeData::class)!!
         assertEquals("a value", rehydrated.value)

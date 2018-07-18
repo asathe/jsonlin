@@ -35,6 +35,24 @@ class JsonTypeTest {
     }
 
     @Test
+    fun canBuildAJsonObject() {
+        val obj = obj()
+                .add("anInt", 123)
+                .add("aString", "aValue")
+                .add("aDecimal", BigDecimal(12.34))
+                .add("aBigInt", BigInteger("12345"))
+                .add("aBool", true)
+                .add("aList", array(value("123")))
+
+        assertThat(123, equalTo(obj.integer("anInt")))
+        assertThat("aValue", equalTo(obj.string("aString")))
+        assertThat(BigDecimal(12.34), equalTo(obj.decimal("aDecimal")))
+        assertThat(12345, equalTo(obj.integer("aBigInt")))
+        assertThat(obj.boolean("aBool"), equalTo(true))
+        assertThat(obj.list("aList")[0], equalTo(value("123") as JsonType))
+    }
+
+    @Test
     fun canExtractSimpleValuesFromAnObject() {
         val obj = obj(
                 "aList" to array("item1", "item2"),

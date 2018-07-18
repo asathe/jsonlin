@@ -269,7 +269,7 @@ class JsonArray() : JsonType, Iterable<JsonType> {
     override fun hashCode(): Int = items.hashCode()
 }
 
-private val encodings = Array(128, {
+private val encodings = Array(128) {
     when (it) {
         '\t'.toInt() -> "\\t"
         '\n'.toInt() -> "\\n"
@@ -281,7 +281,7 @@ private val encodings = Array(128, {
         in 0..0x1f -> "\\u%04x".format(it)
         else -> null
     }
-})
+}
 
 private fun encoded(writer: Writer, value: String) {
     writer.write("\"")

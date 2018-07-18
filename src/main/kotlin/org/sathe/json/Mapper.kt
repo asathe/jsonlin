@@ -84,16 +84,14 @@ class ReflectionMapper : Mapper<Any> {
 
     override fun toJson(value: Any, context: Context): JsonType {
         val obj = JsonObject()
-        obj.add("type", value.javaClass.name)
         value.javaClass.kotlin.members
                 .filter { it is KProperty<*> }
                 .forEach {
-                    println(it.name)
-            val attributeValue = it.call(value)
-            if (attributeValue != null) {
-                obj.add(it.name, context.toJsonType(attributeValue))
-            }
-        }
+                    val attributeValue = it.call(value)
+                    if (attributeValue != null) {
+                        obj.add(it.name, context.toJsonType(attributeValue))
+                    }
+                }
         return obj
     }
 }
@@ -102,60 +100,60 @@ private enum class AnEnumSoWeCanRegisterWithTheMapper
 
 class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
     private val defaultMappers = mapOf(
-                instanceOf(String::class) to object : Mapper<String> {
-                    override fun fromJson(json: JsonType, type: KClass<String>, context: Context): String = (json as JsonValue).string()
-                    override fun toJson(value: String, context: Context): JsonType = value(value)
-                },
-                instanceOf(Int::class) to object : Mapper<Int> {
-                    override fun fromJson(json: JsonType, type: KClass<Int>, context: Context): Int = (json as JsonValue).integer()
-                    override fun toJson(value: Int, context: Context): JsonType = value(value)
-                },
-                className(Int::class.qualifiedName!!) to object : Mapper<Int> {
-                    override fun fromJson(json: JsonType, type: KClass<Int>, context: Context): Int = (json as JsonValue).integer()
-                    override fun toJson(value: Int, context: Context): JsonType = value(value)
-                },
-                instanceOf(Boolean::class) to object : Mapper<Boolean> {
-                    override fun fromJson(json: JsonType, type: KClass<Boolean>, context: Context): Boolean = (json as JsonValue).boolean()
-                    override fun toJson(value: Boolean, context: Context): JsonType = value(value)
-                },
-                className(Boolean::class.qualifiedName!!) to object : Mapper<Boolean> {
-                    override fun fromJson(json: JsonType, type: KClass<Boolean>, context: Context): Boolean = (json as JsonValue).boolean()
-                    override fun toJson(value: Boolean, context: Context): JsonType = value(value)
-                },
-                instanceOf(Double::class) to object : Mapper<Double> {
-                    override fun fromJson(json: JsonType, type: KClass<Double>, context: Context): Double = (json as JsonValue).decimal().toDouble()
-                    override fun toJson(value: Double, context: Context): JsonType = value(BigDecimal(value))
-                },
-                className(Double::class.qualifiedName!!) to object : Mapper<Double> {
-                    override fun fromJson(json: JsonType, type: KClass<Double>, context: Context): Double = (json as JsonValue).decimal().toDouble()
-                    override fun toJson(value: Double, context: Context): JsonType = value(BigDecimal(value))
-                },
-                instanceOf(BigDecimal::class) to object : Mapper<BigDecimal> {
-                    override fun fromJson(json: JsonType, type: KClass<BigDecimal>, context: Context): BigDecimal = (json as JsonValue).decimal()
-                    override fun toJson(value: BigDecimal, context: Context): JsonType = value(value)
-                },
-                instanceOf(LocalDate::class) to object : Mapper<LocalDate> {
-                    override fun fromJson(json: JsonType, type: KClass<LocalDate>, context: Context): LocalDate = LocalDate.parse((json as JsonValue).string())
-                    override fun toJson(value: LocalDate, context: Context): JsonType = value(value.toString())
-                },
-                instanceOf(LocalDateTime::class) to object : Mapper<LocalDateTime> {
-                    override fun fromJson(json: JsonType, type: KClass<LocalDateTime>, context: Context): LocalDateTime = LocalDateTime.parse((json as JsonValue).string())
-                    override fun toJson(value: LocalDateTime, context: Context): JsonType = value(value.toString())
-                },
-                subTypeOf(Enum::class) to EnumMapper<AnEnumSoWeCanRegisterWithTheMapper>(),
-                subTypeOf(List::class) to object : MapperAdapter<List<Any>>() {
-                    override fun toJson(value: List<Any>, context: Context): JsonType = array(value.map { context.toJsonType(it) })
-                },
-                subTypeOf(Set::class) to object : MapperAdapter<Set<Any>>() {
-                    override fun toJson(value: Set<Any>, context: Context): JsonType = array(value.map { context.toJsonType(it) })
-                },
-                subTypeOf(Map::class) to object : MapperAdapter<Map<Any, Any>>() {
-                    override fun toJson(value: Map<Any, Any>, context: Context): JsonType = obj(value
-                            .mapKeys { it.key.toString() }
-                            .mapValues { context.toJsonType(it.value) })
-                },
-                subTypeOf(Serializable::class) to ReflectionMapper()
-        )
+            instanceOf(String::class) to object : Mapper<String> {
+                override fun fromJson(json: JsonType, type: KClass<String>, context: Context): String = (json as JsonValue).string()
+                override fun toJson(value: String, context: Context): JsonType = value(value)
+            },
+            instanceOf(Int::class) to object : Mapper<Int> {
+                override fun fromJson(json: JsonType, type: KClass<Int>, context: Context): Int = (json as JsonValue).integer()
+                override fun toJson(value: Int, context: Context): JsonType = value(value)
+            },
+            className(Int::class.qualifiedName!!) to object : Mapper<Int> {
+                override fun fromJson(json: JsonType, type: KClass<Int>, context: Context): Int = (json as JsonValue).integer()
+                override fun toJson(value: Int, context: Context): JsonType = value(value)
+            },
+            instanceOf(Boolean::class) to object : Mapper<Boolean> {
+                override fun fromJson(json: JsonType, type: KClass<Boolean>, context: Context): Boolean = (json as JsonValue).boolean()
+                override fun toJson(value: Boolean, context: Context): JsonType = value(value)
+            },
+            className(Boolean::class.qualifiedName!!) to object : Mapper<Boolean> {
+                override fun fromJson(json: JsonType, type: KClass<Boolean>, context: Context): Boolean = (json as JsonValue).boolean()
+                override fun toJson(value: Boolean, context: Context): JsonType = value(value)
+            },
+            instanceOf(Double::class) to object : Mapper<Double> {
+                override fun fromJson(json: JsonType, type: KClass<Double>, context: Context): Double = (json as JsonValue).decimal().toDouble()
+                override fun toJson(value: Double, context: Context): JsonType = value(BigDecimal(value))
+            },
+            className(Double::class.qualifiedName!!) to object : Mapper<Double> {
+                override fun fromJson(json: JsonType, type: KClass<Double>, context: Context): Double = (json as JsonValue).decimal().toDouble()
+                override fun toJson(value: Double, context: Context): JsonType = value(BigDecimal(value))
+            },
+            instanceOf(BigDecimal::class) to object : Mapper<BigDecimal> {
+                override fun fromJson(json: JsonType, type: KClass<BigDecimal>, context: Context): BigDecimal = (json as JsonValue).decimal()
+                override fun toJson(value: BigDecimal, context: Context): JsonType = value(value)
+            },
+            instanceOf(LocalDate::class) to object : Mapper<LocalDate> {
+                override fun fromJson(json: JsonType, type: KClass<LocalDate>, context: Context): LocalDate = LocalDate.parse((json as JsonValue).string())
+                override fun toJson(value: LocalDate, context: Context): JsonType = value(value.toString())
+            },
+            instanceOf(LocalDateTime::class) to object : Mapper<LocalDateTime> {
+                override fun fromJson(json: JsonType, type: KClass<LocalDateTime>, context: Context): LocalDateTime = LocalDateTime.parse((json as JsonValue).string())
+                override fun toJson(value: LocalDateTime, context: Context): JsonType = value(value.toString())
+            },
+            subTypeOf(Enum::class) to EnumMapper<AnEnumSoWeCanRegisterWithTheMapper>(),
+            subTypeOf(List::class) to object : MapperAdapter<List<Any>>() {
+                override fun toJson(value: List<Any>, context: Context): JsonType = array(value.map { context.toJsonType(it) })
+            },
+            subTypeOf(Set::class) to object : MapperAdapter<Set<Any>>() {
+                override fun toJson(value: Set<Any>, context: Context): JsonType = array(value.map { context.toJsonType(it) })
+            },
+            subTypeOf(Map::class) to object : MapperAdapter<Map<Any, Any>>() {
+                override fun toJson(value: Map<Any, Any>, context: Context): JsonType = obj(value
+                        .mapKeys { it.key.toString() }
+                        .mapValues { context.toJsonType(it.value) })
+            },
+            subTypeOf(Serializable::class) to ReflectionMapper()
+    )
 
     private val mappers: Map<MapperScope, Mapper<*>> = mapOf(*customMappers) + defaultMappers
     override fun <T : Any> fromJson(json: InputStream, type: KClass<T>): T? {
@@ -168,9 +166,9 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
 
     override fun <T : Any> fromJsonAsStream(json: InputStream, nestedType: KClass<T>): Iterable<T?> {
         val list = JsonParser(JsonLexer(json)).parseListAsStream()
-        return object: Iterable<T?> {
+        return object : Iterable<T?> {
             override fun iterator(): Iterator<T?> {
-                return object: Iterator<T?> {
+                return object : Iterator<T?> {
                     private val iterator = list.iterator()
                     override fun hasNext(): Boolean = iterator.hasNext()
                     override fun next(): T? = fromJson(iterator.next(), nestedType)
@@ -192,7 +190,7 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
         }
         val mapper = mappers
                 .filterKeys { it(type) }.values
-                .elementAtOrElse(0, { throw IllegalArgumentException("Unable to find a JSON mapper for type $type") }) as Mapper<T>
+                .elementAtOrElse(0) { throw IllegalArgumentException("Unable to find a JSON mapper for type $type") } as Mapper<T>
         return mapper
                 .fromJson(json, type, this)
     }
@@ -204,7 +202,7 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
         }
         val mapper = mappers
                 .filterKeys { it(value.javaClass.kotlin) }.values
-                .elementAtOrElse(0, { throw IllegalArgumentException("Unable to find a JSON mapper for $value") }) as Mapper<T>
+                .elementAtOrElse(0) { throw IllegalArgumentException("Unable to find a JSON mapper for $value") } as Mapper<T>
         return mapper.toJson(value, this)
     }
 }
