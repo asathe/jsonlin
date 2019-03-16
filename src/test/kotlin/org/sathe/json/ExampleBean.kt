@@ -12,8 +12,13 @@ class ExampleBean : Serializable {
     var bool1: Boolean? = null
     var dec1: BigDecimal? = null
     var list1: List<String>? = null
+    var map1: Map<String, String>? = null
     var listOfLists: List<List<String>>? = null
     var enum1: ExampleEnum? = null
 
     override fun toString(): String = "ExampleBean"
+}
+
+class BadExampleBean : Serializable {
+    var badSequence1: Sequence<String>? = null
 }

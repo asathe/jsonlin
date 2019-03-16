@@ -6,6 +6,7 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.WildcardType
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.reflect.KClass
@@ -67,7 +68,13 @@ class ReflectionMapper : Mapper<Any> {
                 convert(it, context, type.actualTypeArguments[0])
             }
         }
-        return Any()
+        if (Map::class.java.isAssignableFrom(type.rawType as Class<*>)) {
+            json as JsonObject
+            return json.entries().map {
+                (key, value) -> key to convert(value, context, type.actualTypeArguments[1])
+            }.toMap()
+        }
+        throw JsonException("Unable to deserialize ${json.toJson()} to ${type.rawType} and type parameters ${type.actualTypeArguments.joinToString()}")
     }
 
     private fun convert(json: JsonType, context: Context, type: Class<*>): Any? {
@@ -108,15 +115,7 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
                 override fun fromJson(json: JsonType, type: KClass<Int>, context: Context): Int = (json as JsonValue).integer()
                 override fun toJson(value: Int, context: Context): JsonType = value(value)
             },
-            className(Int::class.qualifiedName!!) to object : Mapper<Int> {
-                override fun fromJson(json: JsonType, type: KClass<Int>, context: Context): Int = (json as JsonValue).integer()
-                override fun toJson(value: Int, context: Context): JsonType = value(value)
-            },
             instanceOf(Boolean::class) to object : Mapper<Boolean> {
-                override fun fromJson(json: JsonType, type: KClass<Boolean>, context: Context): Boolean = (json as JsonValue).boolean()
-                override fun toJson(value: Boolean, context: Context): JsonType = value(value)
-            },
-            className(Boolean::class.qualifiedName!!) to object : Mapper<Boolean> {
                 override fun fromJson(json: JsonType, type: KClass<Boolean>, context: Context): Boolean = (json as JsonValue).boolean()
                 override fun toJson(value: Boolean, context: Context): JsonType = value(value)
             },
@@ -124,13 +123,13 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
                 override fun fromJson(json: JsonType, type: KClass<Double>, context: Context): Double = (json as JsonValue).decimal().toDouble()
                 override fun toJson(value: Double, context: Context): JsonType = value(BigDecimal(value))
             },
-            className(Double::class.qualifiedName!!) to object : Mapper<Double> {
-                override fun fromJson(json: JsonType, type: KClass<Double>, context: Context): Double = (json as JsonValue).decimal().toDouble()
-                override fun toJson(value: Double, context: Context): JsonType = value(BigDecimal(value))
-            },
             instanceOf(BigDecimal::class) to object : Mapper<BigDecimal> {
                 override fun fromJson(json: JsonType, type: KClass<BigDecimal>, context: Context): BigDecimal = (json as JsonValue).decimal()
                 override fun toJson(value: BigDecimal, context: Context): JsonType = value(value)
+            },
+            instanceOf(BigInteger::class) to object : Mapper<BigInteger> {
+                override fun fromJson(json: JsonType, type: KClass<BigInteger>, context: Context): BigInteger = BigInteger((json as JsonValue).string())
+                override fun toJson(value: BigInteger, context: Context): JsonType = value(value)
             },
             instanceOf(LocalDate::class) to object : Mapper<LocalDate> {
                 override fun fromJson(json: JsonType, type: KClass<LocalDate>, context: Context): LocalDate = LocalDate.parse((json as JsonValue).string())
@@ -146,16 +145,28 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
             },
             subTypeOf(Set::class) to object : MapperAdapter<Set<Any>>() {
                 override fun toJson(value: Set<Any>, context: Context): JsonType = array(value.map { context.toJsonType(it) })
+                override fun fromJson(json: JsonType, type: KClass<Set<Any>>, context: Context) = (fromJson(json, context) as List<Any>).toSet()
             },
-            subTypeOf(Map::class) to object : MapperAdapter<Map<Any, Any>>() {
-                override fun toJson(value: Map<Any, Any>, context: Context): JsonType = obj(value
+            subTypeOf(Map::class) to object : MapperAdapter<Map<Any, Any?>>() {
+                override fun toJson(value: Map<Any, Any?>, context: Context): JsonType = obj(value
                         .mapKeys { it.key.toString() }
                         .mapValues { context.toJsonType(it.value) })
+                override fun fromJson(json: JsonType, type: KClass<Map<Any, Any?>>, context: Context): Map<Any, Any> = fromJson(json, context) as Map<Any, Any>
             },
             subTypeOf(Serializable::class) to ReflectionMapper()
     )
 
     private val mappers: Map<MapperScope, Mapper<*>> = mapOf(*customMappers) + defaultMappers
+
+    private fun fromJson(json: JsonType, context: Context): Any? = when (json) {
+        is JsonObject -> json.entries().map { it.key to fromJson(it.value, context) }.toMap()
+        is JsonArray -> json.map { fromJson(it, context) }
+        is JsonNull -> null
+        is JsonValue -> json.value()
+        is JsonStream -> json.map { fromJson(it, context) }
+        else -> null
+    }
+
     override fun <T : Any> fromJson(json: InputStream, type: KClass<T>): T? {
         return fromJson(JsonParser(JsonLexer(json)).parse(), type)
     }
@@ -213,10 +224,6 @@ interface MapperScope {
 
 fun instanceOf(scope: KClass<out Any>) = object : MapperScope {
     override fun invoke(actual: KClass<out Any>): Boolean = scope == actual
-}
-
-fun className(className: String) = object : MapperScope {
-    override fun invoke(actual: KClass<out Any>): Boolean = actual.qualifiedName == className
 }
 
 fun subTypeOf(superclass: KClass<out Any>) = object : MapperScope {

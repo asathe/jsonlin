@@ -74,29 +74,21 @@ class JsonTypeTest {
 
         assertEquals(BigDecimal("123"), obj.decimal("anInt"))
 
-        assertFailsWith<JsonException> {
+        assertEquals("No entry for 'missing'", assertFailsWith<JsonException> {
             obj.string("missing")
-        }.let {
-            assertEquals("No entry for 'missing'", it.message)
-        }
+        }.message)
 
-        assertFailsWith<JsonException> {
+        assertEquals("Expecting an integer but got 12.34 (BigDecimal)", assertFailsWith<JsonException> {
             obj.integer("aDecimal")
-        }.let {
-            assertEquals("Expecting an integer but got 12.34 (BigDecimal)", it.message)
-        }
+        }.message)
 
-        assertFailsWith<JsonException> {
+        assertEquals("Expecting a boolean but got 12.34 (BigDecimal)", assertFailsWith<JsonException> {
             obj.boolean("aDecimal")
-        }.let {
-            assertEquals("Expecting a boolean but got 12.34 (BigDecimal)", it.message)
-        }
+        }.message)
 
-        assertFailsWith<ClassCastException> {
+        assertEquals("org.sathe.json.JsonArray cannot be cast to org.sathe.json.JsonValue", assertFailsWith<ClassCastException> {
             obj.boolean("aList")
-        }.let {
-            assertEquals("org.sathe.json.JsonArray cannot be cast to org.sathe.json.JsonValue", it.message)
-        }
+        }.message)
     }
 
     @Test
@@ -137,12 +129,8 @@ class JsonTypeTest {
         val json = obj("moo.cow[1]/bah" to "sheep")
         assertEquals(value("sheep"), json.find("moo.cow[1]/bah"))
 
-        assertFailsWith<JsonException> { json.find("moo.cow[1]") }.let {
-            assertThat(it.message, containsString("Unable to find moo.cow[1]"))
-        }
-        assertFailsWith<JsonException> { json.find("moo") }.let {
-            assertThat(it.message, containsString("Unable to find moo"))
-        }
+        assertThat(assertFailsWith<JsonException> { json.find("moo.cow[1]") }.message, containsString("Unable to find moo.cow[1]"))
+        assertThat(assertFailsWith<JsonException> { json.find("moo") }.message, containsString("Unable to find moo"))
     }
 
     @Test
@@ -157,18 +145,14 @@ class JsonTypeTest {
     fun blowsUpIfNotFoundOnAnObject() {
         val json = obj("moo" to array(obj("cow1" to array(1, 2)), obj("cow2" to array(3, 4))))
 
-        assertFailsWith<JsonException> { json.find("moo[1].cow3[1]") }.let {
-            assertThat(it.message, containsString("Unable to find cow3"))
-        }
+        assertThat(assertFailsWith<JsonException> { json.find("moo[1].cow3[1]") }.message, containsString("Unable to find cow3"))
     }
 
     @Test
     fun blowsUpIfNotFoundOnAList() {
         val json = obj("moo" to array(obj("cow1" to array(1, 2)), obj("cow2" to array(3, 4))))
 
-        assertFailsWith<JsonException> { json.find("moo[1].cow2[3]") }.let {
-            assertThat(it.message, containsString("Index 3 not found"))
-        }
+        assertThat(assertFailsWith<JsonException> { json.find("moo[1].cow2[3]") }.message, containsString("Index 3 not found"))
     }
 
     @Test
@@ -197,9 +181,8 @@ class JsonTypeTest {
     fun blowsUpIfWeHaveAPathOnALeaf() {
         val json = value("moo")
 
-        assertFailsWith<JsonException> { json.find("cow") }.let {
-            assertEquals("Path \"cow\" goes beyond a leaf - found \"moo\"", it.message)
-        }
+        assertEquals("Path \"cow\" goes beyond a leaf - found \"moo\"",
+                assertFailsWith<JsonException> { json.find("cow") }.message)
     }
 
 }

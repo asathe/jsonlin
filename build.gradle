@@ -1,20 +1,11 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.3.10'
+}
+apply plugin: "java"
+apply plugin: "maven-publish"
+
 group "org.github.asathe.jsonlin"
 version "0.1"
-
-buildscript {
-    ext.kotlin_version = "1.2.51"
-    repositories {
-        mavenCentral()
-        mavenLocal()
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
-
-apply plugin: "java"
-apply plugin: "kotlin"
-apply plugin: "maven-publish"
 
 repositories {
     mavenCentral()
@@ -22,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     compile "org.jetbrains.kotlin:kotlin-reflect"
 
     testCompile "org.jetbrains.kotlin:kotlin-test"
@@ -32,6 +23,7 @@ dependencies {
 
 sourceSets {
     main.java.srcDirs += "src/main/kotlin"
+    test.java.srcDirs += "src/test/kotlin"
 }
 
 jar {

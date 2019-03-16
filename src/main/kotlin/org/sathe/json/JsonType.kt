@@ -190,6 +190,8 @@ class JsonObject() : JsonType {
                 ?: throw JsonException("Expecting a list for '$key' but got '$value'")
     }
 
+    fun entries() = entries.toMap().entries
+
     override fun toString(): String = toJson(Minimal())
 
     override fun equals(other: Any?): Boolean = if (other is JsonObject) entries == other.entries else false
@@ -306,6 +308,8 @@ class JsonValue(private val value: Any) : JsonType {
     override fun accept(visitor: JsonVisitor) {
         visitor.visit(this)
     }
+
+    fun value(): Any = value
 
     fun string(): String = value.toString()
 

@@ -5,7 +5,9 @@ import org.junit.Test
 import java.io.BufferedInputStream
 import java.io.Serializable
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.time.LocalDate
+import java.time.LocalDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -36,7 +38,7 @@ class MapperTest {
     @Test
     fun mapperAdapterAlwaysFailsToSerialise() {
         val bean = ExampleBean()
-        val mapper = Json(instanceOf(ExampleBean::class) to object : MapperAdapter<Any>(){})
+        val mapper = Json(instanceOf(ExampleBean::class) to object : MapperAdapter<Any>() {})
 
         assertFailsWith<JsonException> {
             mapper.toJson(bean)
@@ -45,7 +47,7 @@ class MapperTest {
 
     @Test
     fun mapperAdapterAlwaysFailsToDeserialise() {
-        val mapper = Json(instanceOf(ExampleBean::class) to object : MapperAdapter<Any>(){})
+        val mapper = Json(instanceOf(ExampleBean::class) to object : MapperAdapter<Any>() {})
 
         assertFailsWith<JsonException> {
             mapper.fromJson("{}", ExampleBean::class)
@@ -80,8 +82,23 @@ class MapperTest {
 
         assertTrue(mapper.fromJson(booleans.child("textTrue"), Boolean::class)!!)
         assertTrue(mapper.fromJson(booleans.child("booleanTrue"), Boolean::class)!!)
+        assertTrue(mapper.fromJson(booleans.child("booleanTrue"), Boolean::class.javaPrimitiveType!!.kotlin)!!)
         assertFalse(mapper.fromJson(booleans.child("textFalse"), Boolean::class)!!)
         assertFalse(mapper.fromJson(booleans.child("booleanFalse"), Boolean::class)!!)
+    }
+
+    @Test
+    fun knownTypesCanBeSerialisedAndDeserialised() {
+        assertToAndFromJsonReturnsSameValue(mapOf("key" to "value", "number" to BigInteger("12"), "decimal" to BigDecimal("23.45")))
+        assertToAndFromJsonReturnsSameValue(LocalDateTime.now())
+        assertToAndFromJsonReturnsSameValue(setOf("item1", "item2"))
+        assertToAndFromJsonReturnsSameValue(setOf(true, false))
+        assertToAndFromJsonReturnsSameValue(BigInteger("23"))
+    }
+
+    private fun assertToAndFromJsonReturnsSameValue(value: Any) {
+        val json = mapper.toJson(value)
+        assertEquals(value, mapper.fromJson(json, value::class))
     }
 
     @Test
@@ -92,6 +109,7 @@ class MapperTest {
                 "date1" to "2016-11-19",
                 "int1" to 123,
                 "bool1" to true,
+                "map1" to mapOf("key1" to "value1.1"),
                 "dec1" to BigDecimal("123.56"),
                 "enum1" to ExampleEnum.Entry1,
                 "list1" to array("item1", "item2")
@@ -115,6 +133,15 @@ class MapperTest {
     }
 
     @Test
+    fun cannotDeserialiseObjectWithNonString() {
+        val obj = obj(
+                "badSequence1" to array("value1")
+        )
+
+        assertFailsWith<JsonException> { mapper.fromJson(obj, BadExampleBean::class)!! }
+    }
+
+    @Test
     fun canDealWithStreams() {
         val obj = obj(
                 "field1" to "value1",
@@ -130,6 +157,16 @@ class MapperTest {
         val stream = JsonParser(JsonLexer(buffered)).parseListAsStream()
         stream.first()
         stream.first()
+    }
+
+    @Test
+    fun canUseJsonStreamsFromTheMapper() {
+        val bigList = (0..2000).map { obj("identifier" to "$it") }
+        val json = array(bigList).toJson()
+
+        val maps = mapper.fromJsonAsStream(json.byteInputStream(), Map::class)
+        assertEquals("0", maps.first()!!["identifier"])
+        assertEquals(2000, maps.count())
     }
 
     @Test
