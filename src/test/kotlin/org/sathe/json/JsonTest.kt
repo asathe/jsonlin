@@ -102,7 +102,7 @@ class JsonTest {
     @Test
     fun canDeserialiseUTF16() {
         val json = """["foo","bar",{"foo":"bar"},1,2,[3,4],null,true,{"nested":{"inner":{"array":[2,3.14,321987432],"jagged array":[43,[43,[123,32,43,54]]]}}},{"blah":"slime"},"string with \"escaped quotes\", a'p'o's't'r'o'p'h'e's, commas, [brackets] and {braces}"]"""
-        val types = JsonParser(JsonLexer(json.byteInputStream())).parseListAsStream()
+        val types = JsonParser(json).parseListAsStream()
         assertEquals(value("foo"), types.iterator().next())
         assertEquals(value("bar"), types.iterator().next())
 

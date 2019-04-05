@@ -32,7 +32,7 @@ interface Mapper<T : Any> {
 
 abstract class MapperAdapter<T : Any> : Mapper<T> {
     override fun fromJson(json: JsonType, type: KClass<T>, context: Context): T = throw JsonException("Deserialization not supported for ${this.javaClass.simpleName}")
-    override fun toJson(value: T, context: Context): JsonType = throw JsonException("Deserialization not supported for ${this.javaClass.simpleName}")
+    override fun toJson(value: T, context: Context): JsonType = throw JsonException("Serialization not supported for ${this.javaClass.simpleName}")
 }
 
 class ToStringMapper : Mapper<Any> {
@@ -143,15 +143,15 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
             subTypeOf(List::class) to object : MapperAdapter<List<Any>>() {
                 override fun toJson(value: List<Any>, context: Context): JsonType = array(value.map { context.toJsonType(it) })
             },
-            subTypeOf(Set::class) to object : MapperAdapter<Set<Any>>() {
-                override fun toJson(value: Set<Any>, context: Context): JsonType = array(value.map { context.toJsonType(it) })
-                override fun fromJson(json: JsonType, type: KClass<Set<Any>>, context: Context) = (fromJson(json, context) as List<Any>).toSet()
+            subTypeOf(Set::class) to object : MapperAdapter<Set<*>>() {
+                override fun toJson(value: Set<*>, context: Context): JsonType = array(value.map { context.toJsonType(it) })
+                override fun fromJson(json: JsonType, type: KClass<Set<*>>, context: Context) = (fromJson(json, context) as List<*>).toSet()
             },
-            subTypeOf(Map::class) to object : MapperAdapter<Map<Any, Any?>>() {
-                override fun toJson(value: Map<Any, Any?>, context: Context): JsonType = obj(value
+            subTypeOf(Map::class) to object : MapperAdapter<Map<*, *>>() {
+                override fun toJson(value: Map<*, *>, context: Context): JsonType = obj(value
                         .mapKeys { it.key.toString() }
                         .mapValues { context.toJsonType(it.value) })
-                override fun fromJson(json: JsonType, type: KClass<Map<Any, Any?>>, context: Context): Map<Any, Any> = fromJson(json, context) as Map<Any, Any>
+                override fun fromJson(json: JsonType, type: KClass<Map<*, *>>, context: Context): Map<*, *> = fromJson(json, context) as Map<*, *>
             },
             subTypeOf(Serializable::class) to ReflectionMapper()
     )
