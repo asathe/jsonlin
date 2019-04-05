@@ -101,7 +101,7 @@ class JsonTest {
 
     @Test
     fun canDeserialiseUTF16() {
-        val json = """["foo","bar",{"foo":"bar"},1,2,[3,4],null,true,{"nested":{"inner":{"array":[2,3.14,321987432],"jagged array":[43,[43,[123,32,43,54]]]}}},{"blah":"slime"},"string with \"escaped quotes\", a'p'o's't'r'a'p'h'e's, commas, [brackets] and {braces}"]"""
+        val json = """["foo","bar",{"foo":"bar"},1,2,[3,4],null,true,{"nested":{"inner":{"array":[2,3.14,321987432],"jagged array":[43,[43,[123,32,43,54]]]}}},{"blah":"slime"},"string with \"escaped quotes\", a'p'o's't'r'o'p'h'e's, commas, [brackets] and {braces}"]"""
         val types = JsonParser(JsonLexer(json.byteInputStream())).parseListAsStream()
         assertEquals(value("foo"), types.iterator().next())
         assertEquals(value("bar"), types.iterator().next())
@@ -123,8 +123,8 @@ class JsonTest {
         assertEquals(value(BigDecimal("0.12")), JsonParser("00.12").parse())
 
         assertFailsWith<JsonException>("Invalid numeric format. Expecting +, - or digit for exponent") { JsonParser("1e").parse() }
-        assertFailsWith<JsonException>("Invalid numeric format. Current token '1e-', was not expecting '￿'") { JsonParser("1e-").parse() }
-        assertFailsWith<JsonException>("Invalid numeric format. Current token '1.', was not expecting '.'") { JsonParser("1..3").parse() }
+        assertFailsWith<JsonException>("Invalid numeric format. Current capture '1e-', was not expecting '￿'") { JsonParser("1e-").parse() }
+        assertFailsWith<JsonException>("Invalid numeric format. Current capture '1.', was not expecting '.'") { JsonParser("1..3").parse() }
     }
 
     @Test
@@ -165,7 +165,7 @@ class JsonTest {
                 JsonParser("[{\"moo\":\"cow\"},{\"bah\":\"sheep\"}]").parse())
 
         assertEquals(array(obj("moo" to "cow"), obj("bah" to "sheep")),
-                JsonParser(array(obj("moo" to "cow"), obj("bah" to "sheep")).toJson(PrettyPrint())).parse())
+                JsonParser(array(obj("moo" to "cow"), obj("bah" to "sheep")).toJson()).parse())
     }
 
     @Test
@@ -200,8 +200,8 @@ class JsonTest {
 
     @Test
     fun canDeserialiseDeeplyNestedStructures() {
-        assertEquals(array(array(array(array(array(array(array(array(array(array(array(array(array(false))))))))))))),
-                JsonParser("[[[[[[[[[[[[[false]]]]]]]]]]]]]").parse())
+        assertEquals(array(array(array(false))),
+                JsonParser("[[[false]]]").parse())
     }
 
 }

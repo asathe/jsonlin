@@ -2,88 +2,9 @@ package org.sathe.json
 
 import java.io.InputStream
 import java.io.InputStreamReader
-import java.lang.RuntimeException
 import java.lang.StringBuilder
 import java.math.BigDecimal
 import java.math.BigInteger
-
-class JsonParser(val lexer: Iterator<Any?>) {
-
-    constructor(json: String) : this(JsonLexer(json.byteInputStream()))
-
-    fun parse(): JsonType {
-        return parse(lexer.next())
-    }
-
-    fun parseListAsStream(): JsonStream {
-        val firstToken = lexer.next()
-        assertThat(firstToken == "[") { "expecting start of array but got $firstToken" }
-
-        return JsonStream(object : Iterator<JsonType> {
-            private var size = 0
-            private var currentToken = lexer.next()
-
-            override fun next(): JsonType {
-                if (++size > 1) {
-                    assertThat(currentToken == ",") { "expecting list separator but got $currentToken"}
-                    currentToken = lexer.next()
-                }
-
-                val type = parse(currentToken)
-                currentToken = lexer.next()
-                return type
-            }
-
-            override fun hasNext(): Boolean = currentToken != "]"
-        })
-    }
-
-    private fun parse(token: Any?): JsonType {
-        return when (token) {
-            "{" -> toJsonObject()
-            "[" -> toJsonArray()
-            null -> JsonNull()
-            else -> JsonValue(token)
-        }
-    }
-
-    private fun toJsonArray(): JsonArray {
-        val array = JsonArray()
-        var entry = lexer.next()
-        while (entry != "]") {
-            array.add(parse(entry))
-            entry = lexer.next()
-            if (entry == ",") {
-                entry = lexer.next()
-                assertThat(entry != "]") { "expecting another item but got ']'" }
-            }
-        }
-        return array
-    }
-
-    private fun toJsonObject(): JsonObject {
-        val obj = JsonObject()
-        var key = lexer.next()
-        while (key != "}") {
-            assertThat(key is String) { "expected a string but got '$key'" }
-            val separator = lexer.next()
-            assertThat(separator == ":") { "expected ':' but got '$separator'" }
-            obj.add(key.toString(), parse())
-            key = lexer.next()
-            if (key == ",") {
-                key = lexer.next()
-                assertThat(key != "}") { "expecting another key but got '}'" }
-            }
-        }
-        return obj
-    }
-
-    private fun assertThat(expression: Boolean, message: () -> String) {
-        if (!expression) {
-            throw JsonException(message())
-        }
-    }
-}
 
 class JsonLexer(stream: InputStream) : Iterator<Any?> {
 
@@ -137,7 +58,7 @@ class JsonLexer(stream: InputStream) : Iterator<Any?> {
         tokenBuilder.setLength(0)
 
         fun addDigits(firstIsMandatory: Boolean) {
-            assertThat(!firstIsMandatory || currentChar.isDigit()) { "Invalid numeric format. Current token '$tokenBuilder', was not expecting '$currentChar'" }
+            assertThat(!firstIsMandatory || currentChar.isDigit()) { "Invalid numeric format. Current capture '$tokenBuilder', was not expecting '$currentChar'" }
             while (currentChar.isDigit()) {
                 appendAndFetchNext()
             }
@@ -250,5 +171,3 @@ class JsonLexer(stream: InputStream) : Iterator<Any?> {
     }
 
 }
-
-class JsonException(message: String) : RuntimeException(message)
