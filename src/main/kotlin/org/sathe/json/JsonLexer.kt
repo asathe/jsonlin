@@ -113,7 +113,7 @@ class JsonLexer(stream: InputStream) : Iterator<Any?> {
     private fun knownWord(length: Int): String {
         tokenBuilder.setLength(0)
         tokenBuilder.append(currentChar)
-        for (i in 2..length) tokenBuilder.append(nextChar())
+        repeat(length - 1) { tokenBuilder.append(nextChar()) }
         nextChar()
         return tokenBuilder.toString()
     }
@@ -139,8 +139,7 @@ class JsonLexer(stream: InputStream) : Iterator<Any?> {
         }
 
         fun escapedCharacter() {
-            val escapedCharacter = nextChar()
-            when (escapedCharacter) {
+            when (nextChar()) {
                 '"' -> tokenBuilder.append('"')
                 't' -> tokenBuilder.append('\t')
                 'r' -> tokenBuilder.append('\r')

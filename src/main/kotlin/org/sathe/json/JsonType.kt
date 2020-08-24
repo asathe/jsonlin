@@ -156,33 +156,17 @@ class JsonObject() : JsonType {
         return this
     }
 
-    fun child(key: String): JsonType {
-        return entries[key] ?: throw JsonException("No entry for '$key'")
-    }
+    fun child(key: String) = entries[key] ?: throw JsonException("No entry for '$key'")
 
-    fun hasChild(key: String): Boolean {
-        return entries.containsKey(key)
-    }
+    fun hasChild(key: String) = entries.containsKey(key)
 
-    fun string(key: String): String {
-        val value = entries[key] ?: throw JsonException("No entry for '$key'")
-        return (value as JsonValue).string()
-    }
+    fun string(key: String) = asValue(key).string()
 
-    fun decimal(key: String): BigDecimal {
-        val value = entries[key] ?: throw JsonException("No entry for '$key'")
-        return (value as JsonValue).decimal()
-    }
+    fun decimal(key: String) = asValue(key).decimal()
 
-    fun integer(key: String): Int {
-        val value = entries[key] ?: throw JsonException("No entry for '$key'")
-        return (value as JsonValue).integer()
-    }
+    fun integer(key: String) = asValue(key).integer()
 
-    fun boolean(key: String): Boolean {
-        val value = entries[key] ?: throw JsonException("No entry for '$key'")
-        return (value as JsonValue).boolean()
-    }
+    fun boolean(key: String) = asValue(key).boolean()
 
     fun list(key: String): JsonArray {
         val value = entries[key] ?: throw JsonException("No entry for '$key'")
@@ -202,6 +186,11 @@ class JsonObject() : JsonType {
         val copy: HashMap<String, JsonType> = HashMap()
         copy.putAll(entries)
         return JsonObject(copy)
+    }
+
+    private fun asValue(key: String): JsonValue {
+        val value = entries[key] ?: throw JsonException("No entry for '$key'")
+        return value as JsonValue
     }
 }
 

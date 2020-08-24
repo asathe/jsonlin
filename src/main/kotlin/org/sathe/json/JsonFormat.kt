@@ -51,16 +51,12 @@ class OneLiner : JsonFormat {
 
     private val indent = " "
 
-    override fun endObject(): String {
-        return "$indent}"
-    }
+    override fun endObject() = "$indent}"
 
-    override fun endList(): String {
-        return "$indent]"
-    }
+    override fun endList() = "$indent]"
 
-    override fun separator(): String = " : "
+    override fun separator() = " : "
 
-    override fun startItem(): String = indent
+    override fun startItem() = indent
 
 }

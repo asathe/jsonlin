@@ -4,9 +4,7 @@ class JsonParser(val lexer: JsonLexer) {
 
     constructor(json: String) : this(JsonLexer(json.byteInputStream()))
 
-    fun parse(): JsonType {
-        return parse(lexer.next())
-    }
+    fun parse() = parse(lexer.next())
 
     fun parseListAsStream(): JsonStream {
         val firstToken = lexer.next()

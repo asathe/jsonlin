@@ -6,7 +6,9 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Test
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.time.LocalDate
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 
 class JsonTypeTest {
@@ -39,15 +41,15 @@ class JsonTypeTest {
         val obj = obj()
                 .add("anInt", 123)
                 .add("aString", "aValue")
-                .add("aDecimal", BigDecimal(12.34))
+                .add("aDecimal", BigDecimal("12.34"))
                 .add("aBigInt", BigInteger("12345"))
                 .add("aBool", true)
                 .add("aList", array(value("123")))
 
-        assertThat(123, equalTo(obj.integer("anInt")))
-        assertThat("aValue", equalTo(obj.string("aString")))
-        assertThat(BigDecimal(12.34), equalTo(obj.decimal("aDecimal")))
-        assertThat(12345, equalTo(obj.integer("aBigInt")))
+        assertThat(obj.integer("anInt"), equalTo(123))
+        assertThat(obj.string("aString"), equalTo("aValue"))
+        assertThat(obj.decimal("aDecimal"), equalTo(BigDecimal("12.34")))
+        assertThat(obj.integer("aBigInt"), equalTo(12345))
         assertThat(obj.boolean("aBool"), equalTo(true))
         assertThat(obj.list("aList")[0], equalTo(value("123") as JsonType))
     }
@@ -62,9 +64,9 @@ class JsonTypeTest {
                 "anInt" to 123,
                 "aBool" to true)
 
-        assertThat("aValue", equalTo(obj.string("aString")))
-        assertThat(BigDecimal("12.34"), equalTo(obj.decimal("aDecimal")))
-        assertThat(123, equalTo(obj.integer("anInt")))
+        assertThat(obj.string("aString"), equalTo("aValue"))
+        assertThat(obj.decimal("aDecimal"), equalTo("12.34".toBigDecimal()))
+        assertThat(obj.integer("anInt"), equalTo(123))
         assertThat(obj.boolean("aBool"), equalTo(true))
 
         assertEquals("12.34", obj.string("aDecimal"))
@@ -74,21 +76,25 @@ class JsonTypeTest {
 
         assertEquals(BigDecimal("123"), obj.decimal("anInt"))
 
-        assertEquals("No entry for 'missing'", assertFailsWith<JsonException> {
-            obj.string("missing")
-        }.message)
+        assertThat(assertFailsWith<JsonException> { obj.string("missing") }.message,
+                equalTo("No entry for 'missing'"))
 
-        assertEquals("Expecting an integer but got 12.34 (BigDecimal)", assertFailsWith<JsonException> {
-            obj.integer("aDecimal")
-        }.message)
+        assertThat(assertFailsWith<JsonException> { obj.integer("aDecimal") }.message,
+                equalTo("Expecting an integer but got 12.34 (BigDecimal)"))
 
-        assertEquals("Expecting a boolean but got 12.34 (BigDecimal)", assertFailsWith<JsonException> {
-            obj.boolean("aDecimal")
-        }.message)
+        assertThat(assertFailsWith<JsonException> { obj.boolean("aDecimal") }.message,
+                equalTo("Expecting a boolean but got 12.34 (BigDecimal)"))
 
-        assertEquals("org.sathe.json.JsonArray cannot be cast to org.sathe.json.JsonValue", assertFailsWith<ClassCastException> {
-            obj.boolean("aList")
-        }.message)
+        assertThat(assertFailsWith<ClassCastException> { obj.boolean("aList") }.message,
+                containsString("class org.sathe.json.JsonArray cannot be cast to class org.sathe.json.JsonValue"))
+    }
+
+    @Test
+    fun reportsIncorrectTypes() {
+        val badType = JsonValue(LocalDate.now())
+
+        assertThat(assertFails { badType.decimal() }.message,
+                containsString("Expecting a decimal but got 2020-08-24 (LocalDate)"))
     }
 
     @Test
