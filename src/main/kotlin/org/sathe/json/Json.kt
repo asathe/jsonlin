@@ -69,7 +69,7 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
         is JsonArray -> json.map { fromJson(it, context) }
         is JsonNull -> null
         is JsonValue -> json.value()
-        is JsonStream -> json.map { fromJson(it, context) }
+        is JsonSequence -> json.map { fromJson(it, context) }
         else -> null
     }
 
@@ -78,18 +78,8 @@ class Json(vararg customMappers: Pair<MapperScope, Mapper<*>>) : Context {
 
     override fun fromJson(json: InputStream) = JsonParser(JsonLexer(json)).parse()
 
-    override fun <T : Any> fromJsonAsStream(json: InputStream, nestedType: KClass<T>): Iterable<T?> {
-        val list = JsonParser(JsonLexer(json)).parseListAsStream()
-        return object : Iterable<T?> {
-            override fun iterator(): Iterator<T?> {
-                return object : Iterator<T?> {
-                    private val iterator = list.iterator()
-                    override fun hasNext(): Boolean = iterator.hasNext()
-                    override fun next(): T? = fromJson(iterator.next(), nestedType)
-                }
-            }
-        }
-    }
+    override fun <T : Any> fromJsonAsSequence(json: InputStream, nestedType: KClass<T>) =
+            JsonParser(JsonLexer(json)).parseAsSequence().map { fromJson(it, nestedType) }
 
     override fun <T : Any> fromJson(json: String, type: KClass<T>): T? = fromJson(json.byteInputStream(), type)
 

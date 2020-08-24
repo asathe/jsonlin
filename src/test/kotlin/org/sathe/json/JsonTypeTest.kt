@@ -177,7 +177,7 @@ class JsonTypeTest {
 
     @Test
     fun canFindPathsInStreamsButConsumesEntriesUpToRequestedIndex() {
-        val stream = JsonParser("[{\"moo\": \"cow\"}, {\"bah\": \"sheep\"}]").parseListAsStream()
+        val stream = JsonParser("[{\"moo\": \"cow\"}, {\"bah\": \"sheep\"}]").parseAsSequence()
 
         assertEquals(value("cow"), stream.find("[0].moo"))
         assertEquals(value("sheep"), stream.find("[0].bah"))

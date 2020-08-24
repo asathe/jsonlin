@@ -10,7 +10,7 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.javaField
 
 interface Context {
-    fun <T : Any> fromJsonAsStream(json: InputStream, nestedType: KClass<T>): Iterable<T?>
+    fun <T : Any> fromJsonAsSequence(json: InputStream, nestedType: KClass<T>): Sequence<T?>
     fun <T : Any> fromJson(json: String, type: KClass<T>): T?
     fun <T : Any> fromJson(json: InputStream, type: KClass<T>): T?
     fun <T : Any> fromJson(json: JsonType, type: KClass<T>): T?

@@ -6,11 +6,11 @@ class JsonParser(val lexer: JsonLexer) {
 
     fun parse() = parse(lexer.next())
 
-    fun parseListAsStream(): JsonStream {
+    fun parseAsSequence(): JsonSequence {
         val firstToken = lexer.next()
         assertThat(firstToken == "[") { "expecting start of array but got $firstToken" }
 
-        return JsonStream(object : Iterator<JsonType> {
+        return JsonSequence(object : Iterator<JsonType> {
             private var size = 0
             private var currentToken = lexer.next()
 

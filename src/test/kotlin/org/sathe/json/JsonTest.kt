@@ -61,7 +61,7 @@ class JsonTest {
 
     @Test
     fun canSerialiseAStream() {
-        val stream = JsonStream(array(value(123), value(456)).iterator())
+        val stream = JsonSequence(array(value(123), value(456)).iterator())
 
         assertThat("[123,456]", equalTo(stream.toJson(Minimal())))
     }
@@ -102,12 +102,12 @@ class JsonTest {
     @Test
     fun canDeserialiseUTF16() {
         val json = """["foo","bar",{"foo":"bar"},1,2,[3,4],null,true,{"nested":{"inner":{"array":[2,3.14,321987432],"jagged array":[43,[43,[123,32,43,54]]]}}},{"blah":"slime"},"string with \"escaped quotes\", a'p'o's't'r'o'p'h'e's, commas, [brackets] and {braces}"]"""
-        val types = JsonParser(json).parseListAsStream()
+        val types = JsonParser(json).parseAsSequence()
         assertEquals(value("foo"), types.iterator().next())
         assertEquals(value("bar"), types.iterator().next())
 
         val jsonAsUtf16 = String(json.toByteArray(UTF_16), UTF_16)
-        val utf16types = JsonParser(jsonAsUtf16).parseListAsStream()
+        val utf16types = JsonParser(jsonAsUtf16).parseAsSequence()
         assertEquals(value("foo"), utf16types.iterator().next())
         assertEquals(value("bar"), utf16types.iterator().next())
     }
@@ -176,24 +176,24 @@ class JsonTest {
 
     @Test
     fun canDeserialiseAsAStream() {
-        val stream = JsonParser("[\"moo\"]").parseListAsStream()
+        val stream = JsonParser("[\"moo\"]").parseAsSequence()
         assertEquals(value("moo"), stream.first())
     }
 
     @Test
     fun canDeserialiseAnEmptyStream() {
-        val stream = JsonParser("[]").parseListAsStream()
+        val stream = JsonParser("[]").parseAsSequence()
         assertTrue(stream.toList().isEmpty())
     }
 
     @Test(expected = JsonException::class)
     fun cannotDeserialiseNonArrayTypesAsAStream() {
-        JsonParser("{}").parseListAsStream()
+        JsonParser("{}").parseAsSequence()
     }
 
     @Test(expected = JsonException::class)
     fun failsIfListIsBadlyFormed() {
-        val stream = JsonParser("[\"moo\"\"cow\"]").parseListAsStream()
+        val stream = JsonParser("[\"moo\"\"cow\"]").parseAsSequence()
         assertEquals(value("moo"), stream.first())
         assertEquals(value("cow"), stream.first())
     }

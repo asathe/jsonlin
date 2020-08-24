@@ -32,7 +32,7 @@ interface JsonVisitor {
 
     fun visit(json: JsonNull)
 
-    fun visit(json: JsonStream)
+    fun visit(json: JsonSequence)
 
 }
 
@@ -90,7 +90,7 @@ class JsonPath(path: String) : JsonVisitor {
         result = json
     }
 
-    override fun visit(json: JsonStream) {
+    override fun visit(json: JsonSequence) {
         assert(tokens.nextToken() == "[")
         val index = Integer.valueOf(tokens.nextToken())
         assert(tokens.nextToken() == "]")
@@ -194,7 +194,7 @@ class JsonObject() : JsonType {
     }
 }
 
-class JsonStream(private val types: Iterator<JsonType>) : JsonType, Iterable<JsonType> {
+class JsonSequence(private val types: Iterator<JsonType>) : JsonType, Sequence<JsonType> {
     override fun toJson(writer: Writer, format: JsonFormat) {
         writer.write(format.startList())
         types.forEach { item ->

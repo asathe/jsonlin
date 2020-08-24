@@ -154,7 +154,7 @@ class MapperTest {
         val json = array(bigList).toJson()
         val inputStream = json.byteInputStream()
         val buffered = BufferedInputStream(inputStream)
-        val stream = JsonParser(JsonLexer(buffered)).parseListAsStream()
+        val stream = JsonParser(JsonLexer(buffered)).parseAsSequence()
         stream.first()
         stream.first()
     }
@@ -164,7 +164,7 @@ class MapperTest {
         val bigList = (0..2000).map { obj("identifier" to "$it") }
         val json = array(bigList).toJson()
 
-        val maps = mapper.fromJsonAsStream(json.byteInputStream(), Map::class)
+        val maps = mapper.fromJsonAsSequence(json.byteInputStream(), Map::class)
         assertEquals("0", maps.first()!!["identifier"])
         assertEquals(2000, maps.count())
     }
